@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>2 Rooms and a Boom</title>
+</head>
+<body>
+	<h1 id="title">2 Rooms and a Boom</h1>
+	<div id="mainbox">
+		<h2>Game Code</h2>
+		<br>
+		<form method="post">
+			<input id="code" name="code" type="text" maxlength="4">
+			<input id="submit" type="submit" value="Go">
+		</form>
+		<br>
+		<a id="create" href="/create/">Create Game</a>
+	</div>
+</body>
+<script>
+setCookie('id', '', -1);
+setCookie('num', '', -1);
+
+function setCookie(cname, cvalue, exdays) {
+    var d = new Date();
+    d.setTime(d.getTime() + (exdays*24*60*60*1000));
+    var expires = "expires="+ d.toUTCString();
+    document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+}
+</script>
+<style>
+	body {
+		background-color: #e0e0e0;
+		text-align: center;
+	}
+	h1 {
+		color: #333333;
+		font-size: 50px;
+		text-transform: uppercase;
+	}
+	h2 {
+		color: #333333;
+		font-size: 30px;
+		text-transform: uppercase;
+		margin: 10px 0 0 0;
+	}
+	#title {
+		position: fixed;
+  		top: 20%;
+  		left: 50%;
+  		transform: translate(-50%, -50%);
+	}
+	#code {
+		width: 65px;
+		height: 35px;
+		padding: 2px 0 0 0;
+		background-color: #e0e0e0;
+		color: #333333;
+		border: none;
+		transition-duration: 0.2s;
+		font-size: 20px;
+		text-align: center;
+		text-transform: uppercase;
+	}
+	#submit {
+		width: 50px;
+		height: 37px;
+		padding: 2px 0 0 0;
+		background-color: #e0e0e0;
+		color: #333333;
+		border: none;
+		transition-duration: 0.2s;
+		font-size: 20px;
+		text-align: center;
+		text-transform: uppercase;
+		margin-left: 5px;
+	}
+	#create {
+		padding: 2px 5px;
+		background-color: #e0e0e0;
+		color: #333333;
+		transition-duration: 0.2s;
+		font-size: 16px;
+		text-align: center;
+		text-transform: uppercase;
+		text-decoration: none;
+	}
+	#submit:hover, #code:hover, #create:hover, #submit:focus, #code:focus, #create:focus {
+		background-color: #d0d0d0;
+		outline: none;
+	}
+	#mainbox {
+		position: fixed;
+  		top: 60%;
+  		left: 50%;
+  		transform: translate(-50%, -50%);
+		padding: 20px;
+		text-align: center;
+		box-shadow: 0 0 5px 5px #c0c0c0;
+		border-radius: 10px;
+		background-color: #c0c0c0;
+	}
+</style>
+</html>

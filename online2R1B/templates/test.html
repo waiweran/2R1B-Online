@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>2 Rooms and a Boom</title>
+</head>
+<body>
+<script src="{{url_for('static', filename='game.js')}}"></script>
+<script>
+    {% if toggle %}
+        setCookie("go", "yes", 1);
+    {% else %}
+        setCookie("go", "no", -1);
+    {% endif %}
+    window.location = "/create/";
+</script>
+</body>
+</html>
