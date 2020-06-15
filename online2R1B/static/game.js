@@ -10,35 +10,62 @@ function createGame() {
     var numGameCards = 0;
     var expand = false;
     var allCards = [
-        {"name1": "Doctor", "name2": "Engineer", "class": "blueredteam", "id": 1},
-        {"name1": 'Gambler', "class": "grayteam", "id": 13},
-        {"name1": "Blue Spy", "name2": "Red Spy", "class": "blueredteam", "id": 2},
-        {"name1": "Coy Boy", "name2": "Coy Boy", "class": "blueredteam", "id": 3},
-        {"name1": 'MI6', "class": "grayteam", "id": 4},
-        {"name1": "Angel", "name2": "Angel", "class": "blueredteam", "id": 5},
-        {"name1": "Demon", "name2": "Demon", "class": "blueredteam", "id": 6},
-        {"name1": 'Drunk', "class": "unknownteam", "id": 11},
-        {"name1": 'Leprechaun', "class": "greenteam", "id": 12},
-        {"name1": 'Hot Potato', "class": "grayteam", "id": 15},
-        {"name1": "Shy Guy", "name2": "Shy Guy", "class": "blueredteam", "id": 7},
-        {"name1": "Thug", "name2": "Thug", "class": "blueredteam", "id": 8},
-        {"name1": "Criminal", "name2": "Criminal", "class": "blueredteam", "id": 9},
-        {"name1": "Dealer", "name2": "Dealer", "class": "blueredteam", "id": 10},
-        {"name1": 'Zombie', "class": "greenteam", "id": 14},
-        {"name1": "Blue Team", "name2": "Red Team", "class": "blueredteam", "id": 0},
+        {"name1": "Doctor", "name3": "Engineer", "class": "blueredteam", "id": 1},
+        {"name1": "Blue Spy", "name3": "Red Spy", "class": "blueredteam", "id": 2},
+        {"name1": "Coy Boy", "name3": "Coy Boy", "class": "blueredteam", "id": 3},
+        {"name1": "Shy Guy", "name3": "Shy Guy", "class": "blueredteam", "id": 7},
+        {"name1": "Thug", "name3": "Thug", "class": "blueredteam", "id": 8},
+        {"name1": "Criminal", "name3": "Criminal", "class": "blueredteam", "id": 9},
+        {"name1": "Dealer", "name3": "Dealer", "class": "blueredteam", "id": 10},
+        {"name1": "Angel", "name3": "Angel", "class": "blueredteam", "id": 5},
+        {"name1": "Demon", "name3": "Demon", "class": "blueredteam", "id": 6},
+        {"name1": "Negotiator", "name3": "Negotiator", "class": "blueredteam", "id": 25},
+        {"name1": "Paranoid", "name3": "Paranoid", "class": "blueredteam", "id": 26},
+        {"name1": "Medic", "name3": "Medic", "class": "blueredteam", "id": 27},
+        {"name1": "Psychologist", "name3": "Psychologist", "class": "blueredteam", "id": 28},
+        {"name2": 'Gambler', "class": "grayteam", "id": 13},
+        {"name2": 'MI6', "class": "grayteam", "id": 4},
+        {"name2": 'Nuclear Tyrant', "class": "grayteam", "id": 31},
+        {"name2": 'Hot Potato', "class": "grayteam", "id": 15},
+        {"name2": 'Leprechaun', "class": "greenteam", "id": 12},
+        {"name1": "Sniper", "name2": "Target", "name3": "Decoy", "class": "grayteam", "id": 16},
+        {"name1": "Ahab", "name3": "Moby", "class": "grayteam", "id": 17},
+        {"name1": "Butler", "name3": "Maid", "class": "grayteam", "id": 20},
+        {"name1": "Romeo", "name3": "Juliet", "class": "grayteam", "id": 23},
+        {"name1": "Wife", "name3": "Mistress", "class": "grayteam", "id": 24},
+        {"name2": 'Bomb-Bot', "class": "grayteam", "id": 18},
+        {"name2": 'Queen', "class": "grayteam", "id": 19},
+        {"name2": 'Intern', "class": "grayteam", "id": 21},
+        {"name2": 'Victim', "class": "grayteam", "id": 22},
+        {"name2": 'Rival', "class": "grayteam", "id": 29},
+        {"name2": 'Survivor', "class": "grayteam", "id": 30},
+        {"name1": "President's Daughter", "name3": "Martyr", "class": "blueredteam", "id": 32},
+        {"name1": "Nurse", "name3": "Tinkerer", "class": "blueredteam", "id": 33},
+        {"name2": "Private Eye", "class": "grayteam", "id": 34},
+        {"name2": 'Drunk', "class": "unknownteam", "id": 11},
+        {"name2": 'Zombie', "class": "greenteam", "id": 14},
+        {"name1": "Blue Team", "name3": "Red Team", "class": "blueredteam", "id": 0},
     ];
     for(var card of allCards) {
         var cardElement = document.createElement('SPAN');
         cardElement.className = card.class;
         var name1 = document.createElement('LABEL');
-        name1.innerHTML = card.name1;
+        name1.className = "leftjust";
         var name2 = document.createElement('LABEL');
-        name2.className = "rightjust";
+        var name3 = document.createElement('LABEL');
+        name3.className = "rightjust";
+        if(card.name1 != undefined) {
+            name1.innerHTML = card.name1;            
+        }
         if(card.name2 != undefined) {
             name2.innerHTML = card.name2;            
         }
+        if(card.name3 != undefined) {
+            name3.innerHTML = card.name3;            
+        }
         cardElement.appendChild(name1);
         cardElement.appendChild(name2);
+        cardElement.appendChild(name3);
         allCardsBox.appendChild(cardElement);
         cardElement.card = card;
     }
@@ -60,11 +87,12 @@ function createGame() {
                 cardElement.className = 'blueredteam';
                 var name1 = document.createElement('LABEL');
                 name1.innerHTML = "Blue Team";
-                var name2 = document.createElement('LABEL');
-                name2.className = "rightjust";
-                name2.innerHTML = "Red Team";            
+                name1.className = "leftjust";
+                var name3 = document.createElement('LABEL');
+                name3.className = "rightjust";
+                name3.innerHTML = "Red Team";            
                 cardElement.appendChild(name1);
-                cardElement.appendChild(name2);
+                cardElement.appendChild(name3);
                 allCardsBox.appendChild(cardElement);
                 cardElement.card = el.card;
             }
@@ -561,7 +589,7 @@ function initialize(game, myPlayerNum) {
         document.getElementById('fade').style.display = "none";
 
         // Start the round timer
-        var roundEndTime = startTime + 6000*round.time;
+        var roundEndTime = startTime + 60000*round.time;
         var roundTimer = setInterval(function runTimer() {
             var timeLeft = roundEndTime - Date.now();
             timer.innerHTML = "Round " + round.num + "<br>" + Math.floor(timeLeft/60000)

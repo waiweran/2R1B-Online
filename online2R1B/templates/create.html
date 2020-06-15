@@ -13,7 +13,7 @@
 	<div id="gamecards">
 		<h2 class="fixed">This Game</h2>
 		<span class="blueredteam faded fixed" id="presidentbomber">
-			<label>President</label>
+			<label class="leftjust">President</label>
 			<label class="rightjust">Bomber</label>
 		</span>
 	</div>
@@ -45,18 +45,18 @@
 		margin: 8px 0 0 0;
 	}
 	span {
-		height: 30px;
+		height: 26px;
 		margin: 5px;
+		padding-top: 4px;
 		color: white;
 		border: none;
 		font-size: 20px;
-		text-align: left;
+		text-align: center;
 		border-radius: 10px;
 		display: block;
 	}
 	span label {
-		float: left;
-		margin: 5px 15px 0 10px;
+		margin: 0 10px;
 	}
 	.grayteam {
 		background-color: #939394;
@@ -69,6 +69,9 @@
 	}
 	.blueredteam {
 		background-image: linear-gradient(to right, #3a56a5, #3a56a5, #ee1c29, #ee1c29);
+	}
+	span label.leftjust {
+		float: left;
 	}
 	span label.rightjust {
 		float: right;

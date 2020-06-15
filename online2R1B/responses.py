@@ -190,28 +190,40 @@ def process_event(json, game_entry, game_obj, sender):
             }, room='room_{}'.format(json['id']))
 
     elif json['action'] == 'privatereveal':
-        game_obj.actions.extend(sender.mark_private_reveal())
-        game_obj.actions.append(Action(json['target'], {
-            'action': 'privatereveal',
-            'target': sender.num,
-            'role': sender.role.source,
-        }))
+        if 'shy' not in sender.conditions and 'coy' not in sender.conditions and \
+                'savvy' not in sender.conditions and 'paranoid' not in sender.conditions:
+            target = game_obj.players[json['target']]
+            game_obj.actions.extend(sender.mark_private_reveal(target))
+            game_obj.actions.append(Action(target.num, {
+                'action': 'privatereveal',
+                'target': sender.num,
+                'role': sender.role.source,
+            }))
+            game_obj.actions.append(Action(sender.num, {
+                'action': 'privatereveal',
+                'target': sender.num,
+                'role': sender.role.source,
+            }))
 
     elif json['action'] == 'publicreveal':
-        game_obj.actions.extend(sender.mark_public_reveal())
-        game_obj.actions.append(Action('room', {
-            'action': 'publicreveal',
-            'target': sender.num,
-            'role': sender.role.source,
-        }))
+        if 'shy' not in sender.conditions and 'coy' not in sender.conditions and \
+                'savvy' not in sender.conditions and 'paranoid' not in sender.conditions:
+            game_obj.actions.extend(sender.mark_public_reveal())
+            game_obj.actions.append(Action('room', {
+                'action': 'publicreveal',
+                'target': sender.num,
+                'role': sender.role.source,
+            }))
 
     elif json['action'] == 'permanentpublicreveal':
-        game_obj.actions.extend(sender.mark_permanent_public_reveal())
-        game_obj.actions.append(Action('room', {
-            'action': 'permanentpublicreveal',
-            'target': sender.num,
-            'role': sender.role.source,
-        }))
+        if 'shy' not in sender.conditions and 'coy' not in sender.conditions and \
+                'savvy' not in sender.conditions and 'paranoid' not in sender.conditions:
+            game_obj.actions.extend(sender.mark_permanent_public_reveal())
+            game_obj.actions.append(Action('room', {
+                'action': 'permanentpublicreveal',
+                'target': sender.num,
+                'role': sender.role.source,
+            }))
 
     elif json['action'] == 'colorshare':
         target: Player = game_obj.players[json['target']]
@@ -238,7 +250,8 @@ def process_event(json, game_entry, game_obj, sender):
                 'target': sender.color_share,
             }, room=sender.sid)
         sender.card_share = None
-        if 'shy' in sender.conditions or sender.color_share == target.num:
+        if 'shy' in sender.conditions or 'savvy' in sender.conditions or \
+                'paranoid' in sender.conditions or sender.color_share == target.num:
             sender.color_share = None
         elif 'foolish' in target.conditions or target.color_share == sender.num:
             sender.color_share = None
@@ -293,7 +306,9 @@ def process_event(json, game_entry, game_obj, sender):
                 'target': sender.color_share,
             }, room=sender.sid)
         sender.color_share = None
-        if 'shy' in sender.conditions or 'coy' in sender.conditions or sender.card_share == target.num:
+        if 'shy' in sender.conditions or 'coy' in sender.conditions or \
+                ('paranoid' in sender.conditions and len(sender.shares) > 1) or \
+                sender.card_share == target.num:
             sender.card_share = None
         elif 'foolish' in target.conditions or target.card_share == sender.num:
             sender.card_share = None

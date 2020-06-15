@@ -7,7 +7,7 @@ if len(sys.argv) < 2:
 
 elif sys.argv[1] == 'runserver':
 	print('Running server')
-	socketio.run(app)
+	socketio.run(app, debug=True)
 
 elif sys.argv[1] == 'setupdb':
 	print('Creating tables')

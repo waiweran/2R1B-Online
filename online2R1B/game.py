@@ -1,5 +1,6 @@
 import random
 from typing import List, Tuple, Optional, Set
+from online2R1B import cards
 
 
 class Game:
@@ -100,6 +101,8 @@ class Game:
                     }))
 
     def mark_color_share(self, player1: 'Player', player2: 'Player'):
+        self.actions.extend(player1.mark_color_share(player2))
+        self.actions.extend(player2.mark_color_share(player1))
         if player1.role.id == 'hotpotato' or player2.role.id == 'hotpotato' or \
                 (player1.role.id == 'leprechaun' and not player2.leprechaun) or \
                 (player2.role.id == 'leprechaun' and not player1.leprechaun):
@@ -172,6 +175,7 @@ class Game:
         }))
 
     def calc_winners(self):
+        nt_index = -1
         president = None
         bomber = None
         for player in self.players:
@@ -179,13 +183,23 @@ class Game:
                 president = player
             if player.role.id == 'bomber':
                 bomber = player
+        if president is None:
+            for player in self.players:
+                if player.role.id == 'presidentsdaughter':
+                    president = player
+        if bomber is None:
+            for player in self.players:
+                if player.role.id == 'martyr':
+                    bomber = player
 
         if 'ill' in president.conditions:
-            president.conditions.remove('ill')
-            president.conditions.add('dead')
+            if self.settings['bury'].id != 'doctor' or 'nursed' not in president.conditions:
+                president.conditions.remove('ill')
+                president.conditions.add('dead')
         if 'broken' in bomber.conditions:
-            bomber.conditions.remove('broken')
-            bomber.conditions.add('fizzled')
+            if self.settings['bury'].id != 'engineer' or 'tinkered' not in bomber.conditions:
+                bomber.conditions.remove('broken')
+                bomber.conditions.add('fizzled')
         else:
             for player in self.players:
                 if player.room == bomber.room:
@@ -202,11 +216,13 @@ class Game:
                         win = False
                         break
                 winners.append(win)
+
             elif 'in love' in player.conditions:
                 if player.room == self.players[player.partner].room:
                     winners.append(True)
                 else:
                     winners.append(False)
+
             elif 'in hate' in player.conditions:
                 if player.room != self.players[player.partner].room:
                     winners.append(True)
@@ -216,6 +232,7 @@ class Game:
             # Red and Blue win conditions
             elif player.role.team == 1:
                 winners.append('dead' not in president.conditions)
+
             elif player.role.team == 2:
                 winners.append('fizzled' not in bomber.conditions and 'dead' in president.conditions)
 
@@ -227,38 +244,156 @@ class Game:
                         win = False
                         break
                 winners.append(win)
+
             elif player.role.team == 4:
                 winners.append(True)
 
             # Gray card win conditions
             elif player.role.id == 'mi6':
-                if 'president' in player.shares and 'bomber' in player.shares:
-                    winners.append(True)
-                else:
-                    winners.append(False)
+                winners.append('president' in player.shares and 'bomber' in player.shares)
+            elif player.role.id == 'nucleartyrant':
+                nt_won = 'president' not in player.shares and 'bomber' not in player.shares
+                if nt_won:
+                    nt_index = player.num
+                winners.append(nt_won)
+
             elif player.role.id == 'gambler':
                 if 'dead' not in president.conditions:
-                    if player.prediction == 1:
-                        winners.append(True)
-                    else:
-                        winners.append(False)
+                    winners.append(player.prediction == 1)
                 elif 'fizzled' not in bomber.conditions and 'dead' in president.conditions:
-                    if player.prediction == 2:
-                        winners.append(True)
-                    else:
-                        winners.append(False)
+                    winners.append(player.prediction == 2)
                 else:
-                    if player.prediction == 0:
-                        winners.append(True)
-                    else:
-                        winners.append(False)
+                    winners.append(player.prediction == 0)
+
             elif player.role.id == 'hotpotato':
                 winners.append(False)
+
+            elif player.role.id == 'ahab':
+                if player.room != bomber.room:
+                    moby_room = None
+                    for m_player in self.players:
+                        if m_player.role.id == 'moby':
+                            moby_room = m_player.room
+                            break
+                    winners.append(moby_room == bomber.room)
+                else:
+                    winners.append(False)
+            elif player.role.id == 'moby':
+                if player.room != bomber.room:
+                    ahab_room = None
+                    for m_player in self.players:
+                        if m_player.role.id == 'ahab':
+                            ahab_room = m_player.room
+                            break
+                    winners.append(ahab_room == bomber.room)
+                else:
+                    winners.append(False)
+
+            elif player.role.id == 'mistress':
+                if player.room == president.room:
+                    wife_room = None
+                    for m_player in self.players:
+                        if m_player.role.id == 'wife':
+                            wife_room = m_player.room
+                            break
+                    winners.append(wife_room != president.room)
+                else:
+                    winners.append(False)
+            elif player.role.id == 'wife':
+                if player.room == president.room:
+                    mistress_room = None
+                    for m_player in self.players:
+                        if m_player.role.id == 'mistress':
+                            mistress_room = m_player.room
+                            break
+                    winners.append(mistress_room != president.room)
+                else:
+                    winners.append(False)
+
+            elif player.role.id == 'bombbot':
+                winners.append(player.room == bomber.room and president.room != bomber.room)
+            elif player.role.id == 'queen':
+                winners.append(player.room != bomber.room and player.room != president.room)
+
+            elif player.role.id == 'intern':
+                winners.append(player.room == president.room)
+            elif player.role.id == 'victim':
+                winners.append(player.room == bomber.room)
+
+            elif player.role.id == 'rival':
+                winners.append(player.room != president.room)
+            elif player.role.id == 'survivor':
+                winners.append(player.room != bomber.room)
+
+            elif player.role.id == 'butler':
+                if player.room != president.room:
+                    maid_room = None
+                    for m_player in self.players:
+                        if m_player.role.id == 'maid':
+                            maid_room = m_player.room
+                            break
+                    winners.append(maid_room == player.room)
+                else:
+                    winners.append(False)
+            elif player.role.id == 'maid':
+                if player.room != president.room:
+                    butler_room = None
+                    for m_player in self.players:
+                        if m_player.role.id == 'butler':
+                            butler_room = m_player.room
+                            break
+                    winners.append(butler_room == player.room)
+                else:
+                    winners.append(False)
+
+            elif player.role.id == 'romeo':
+                if player.room != bomber.room:
+                    juliet_room = None
+                    for m_player in self.players:
+                        if m_player.role.id == 'juliet':
+                            juliet_room = m_player.room
+                            break
+                    winners.append(juliet_room == player.room)
+                else:
+                    winners.append(False)
+            elif player.role.id == 'juliet':
+                if player.room != bomber.room:
+                    romeo_room = None
+                    for m_player in self.players:
+                        if m_player.role.id == 'romeo':
+                            romeo_room = m_player.room
+                            break
+                    winners.append(romeo_room == player.room)
+                else:
+                    winners.append(False)
+
+            elif player.role.id == 'sniper':
+                winners.append(self.players[player.prediction].role.id == 'target')
+            elif player.role.id == 'target':
+                shot = None
+                for s_player in self.players:
+                    if s_player.role.id == 'sniper':
+                        shot = s_player.prediction
+                        break
+                winners.append(shot != player.num)
+
+            elif player.role.id == 'decoy':
+                shot = None
+                for s_player in self.players:
+                    if s_player.role.id == 'sniper':
+                        shot = s_player.prediction
+                        break
+                winners.append(shot == player.num)
+
             # Add gray card win conditions here
 
             # Unknown cards (auto-lose)
             else:
                 winners.append(False)
+
+        if nt_index:
+            for i in range(len(winners)):
+                winners[i] = (i == nt_index)
         return winners
 
 
@@ -320,12 +455,37 @@ class Player:
                 self.conditions.discard('coy')
             elif 'shy' in self.conditions:
                 self.conditions.discard('shy')
+            elif 'paranoid' in self.conditions:
+                self.conditions.discard('paranoid')
             else:
                 self.conditions.add('foolish')
-        elif player.role.team == 3 or 'zombie' in player.conditions:
-            self.conditions.add('zombie')
+
+        # Removing Conditions
+        elif player.role.id in ('redmedic', 'bluemedic'):
+            self.conditions.remove('coy')
+            self.conditions.remove('shy')
+            self.conditions.remove('foolish')
+            self.conditions.remove('savvy')
+            self.conditions.remove('paranoid')
+            self.conditions.remove('honest')
+            self.conditions.remove('liar')
+            self.conditions.remove('zombie')
+            self.conditions.remove('inlove')
+            self.conditions.remove('inhate')
+        elif player.role.id in ('redpsychologist', 'bluepsychologist'):
+            self.conditions.remove('coy')
+            self.conditions.remove('shy')
+            self.conditions.remove('foolish')
+            self.conditions.remove('savvy')
+            self.conditions.remove('paranoid')
         else:
             change = False
+
+        # Zombie Condition
+        if player.role.team == 3 or 'zombie' in player.conditions:
+            self.conditions.add('zombie')
+            change = True
+
         if change:
             actions.append(Action(self.num, {
                 'action': 'updateplayer',
@@ -335,8 +495,34 @@ class Player:
 
         return actions
 
-    def mark_private_reveal(self) -> List['Action']:
-        return []
+    def mark_color_share(self, player: 'Player') -> List['Action']:
+        actions = list()
+
+        # Zombie Condition
+        if player.role.team == 3 or 'zombie' in player.conditions:
+            self.conditions.add('zombie')
+            actions.append(Action(self.num, {
+                'action': 'updateplayer',
+                'role': self.role.source,
+                'conditions': list(self.conditions),
+            }))
+
+        return actions
+
+    def mark_private_reveal(self, player: 'Player') -> List['Action']:
+        actions = []
+        if self.role.id in ('redpsychologist', 'bluepsychologist'):
+            player.conditions.remove('coy')
+            player.conditions.remove('shy')
+            player.conditions.remove('foolish')
+            player.conditions.remove('savvy')
+            player.conditions.remove('paranoid')
+            actions.append(Action(player.num, {
+                'action': 'updateplayer',
+                'role': player.role.source,
+                'conditions': list(player.conditions),
+            }))
+        return actions
 
     def mark_public_reveal(self) -> List['Action']:
         return []
@@ -355,54 +541,38 @@ def deal_roles(num_players: int, choices: List[int]) -> Tuple[List['Role'], List
         'drunk': False,
         'bury': False,
     }
+    doctor_engineer = False
+    daughter_martyr = False
+    nurse_tinkerer = False
     for choice in choices:
-        if choice == 0 and len(roles) <= num_roles - 2:
-            roles.append(Role(role_id='blueteam', source='/static/Cards/BlueTeam.png', team=1))
-            roles.append(Role(role_id='redteam', source='/static/Cards/RedTeam.png', team=2))
-        elif choice == 1 and len(roles) <= num_roles - 2:
-            roles.append(Role(role_id='doctor', source='/static/Cards/Doctor.png', team=1))
-            roles.append(Role(role_id='engineer', source='/static/Cards/Engineer.png', team=2))
-            roles[0].conditions.append('ill')
-            roles[1].conditions.append('broken')
-        elif choice == 2 and len(roles) <= num_roles - 2:
-            roles.append(Role(role_id='bluespy', source='/static/Cards/BlueSpy.png', team=1))
-            roles.append(Role(role_id='redspy', source='/static/Cards/RedSpy.png', team=2))
-        elif choice == 3 and len(roles) <= num_roles - 2:
-            roles.append(Role(role_id='bluecoyboy', source='/static/Cards/BlueCoyBoy.png', team=1, conditions=['coy']))
-            roles.append(Role(role_id='redcoyboy', source='/static/Cards/RedCoyBoy.png', team=2, conditions=['coy']))
-        elif choice == 4 and len(roles) <= num_roles - 1:
-            roles.append(Role(role_id='mi6', source='/static/Cards/MI6.png', team=0))
-        elif choice == 5 and len(roles) <= num_roles - 2:
-            roles.append(Role(role_id='blueangel', source='/static/Cards/BlueAngel.png', team=1, conditions=['honest']))
-            roles.append(Role(role_id='redangel', source='/static/Cards/RedAngel.png', team=2, conditions=['honest']))
-        elif choice == 6 and len(roles) <= num_roles - 2:
-            roles.append(Role(role_id='bluedemon', source='/static/Cards/BlueDemon.png', team=1, conditions=['liar']))
-            roles.append(Role(role_id='reddemon', source='/static/Cards/RedDemon.png', team=2, conditions=['liar']))
-        elif choice == 7 and len(roles) <= num_roles - 2:
-            roles.append(Role(role_id='blueshyguy', source='/static/Cards/BlueShyGuy.png', team=1, conditions=['shy']))
-            roles.append(Role(role_id='redshyguy', source='/static/Cards/RedShyGuy.png', team=2, conditions=['shy']))
-        elif choice == 8 and len(roles) <= num_roles - 2:
-            roles.append(Role(role_id='bluecriminal', source='/static/Cards/BlueCriminal.png', team=1))
-            roles.append(Role(role_id='redcriminal', source='/static/Cards/RedCriminal.png', team=2))
-        elif choice == 9 and len(roles) <= num_roles - 2:
-            roles.append(Role(role_id='bluethug', source='/static/Cards/BlueThug.png', team=1))
-            roles.append(Role(role_id='redthug', source='/static/Cards/RedThug.png', team=2))
-        elif choice == 10 and len(roles) <= num_roles - 2:
-            roles.append(Role(role_id='bluedealer', source='/static/Cards/BlueDealer.png', team=1))
-            roles.append(Role(role_id='reddealer', source='/static/Cards/RedDealer.png', team=2))
-        elif choice == 11 and len(roles) <= num_roles - 1:
-            roles.append(Role(role_id='drunk', source='/static/Cards/Drunk.png', team=5))
-            settings['drunk'] = True
-            num_roles += 1
-        elif choice == 12 and len(roles) <= num_roles - 1:
-            roles.append(Role(role_id='leprechaun', source='/static/Cards/Leprechaun.png', team=4,
-                              conditions=['foolish']))
-        elif choice == 13 and len(roles) <= num_roles - 1:
-            roles.append(Role(role_id='gambler', source='/static/Cards/Gambler.png', team=0))
-        elif choice == 14 and len(roles) <= num_roles - 1:
-            roles.append(Role(role_id='zombie', source='/static/Cards/Zombie.png', team=3))
-        elif choice == 15 and len(roles) <= num_roles - 1:
-            roles.append(Role(role_id='hotpotato', source='/static/Cards/HotPotato.png', team=0))
+        role_choice = cards.roleList[choice]
+        if len(roles) + len(role_choice) <= num_roles:
+            for r in role_choice:
+                if 'conditions' in r:
+                    roles.append(Role(role_id=r['id'], source=r['source'], team=r['team'], conditions=r['conditions']))
+                else:
+                    roles.append(Role(role_id=r['id'], source=r['source'], team=r['team']))
+            if choice == 1:
+                doctor_engineer = True
+                roles[0].conditions.append('ill')
+                roles[1].conditions.append('broken')
+            elif choice == 11:
+                settings['drunk'] = True
+                num_roles += 1
+            elif choice == 32:
+                daughter_martyr = True
+            elif choice == 33:
+                nurse_tinkerer = True
+            if 31 < choice < 35 and not settings['bury']:
+                settings['bury'] = True
+                num_roles += 1
+
+    if doctor_engineer and settings['bury']:
+        for role in roles:
+            if role.id == 'presidentsdaughter':
+                role.conditions.append('ill')
+            elif role.id == 'martyr':
+                role.conditions.append('broken')
 
     while len(roles) <= num_roles - 2:
         roles.append(Role(role_id='blueteam', source='/static/Cards/BlueTeam.png', team=1))
@@ -422,9 +592,18 @@ def deal_roles(num_players: int, choices: List[int]) -> Tuple[List['Role'], List
     random.shuffle(roles)
 
     if settings['drunk']:
-        settings['drunk'] = roles.pop()
+        for i in range(len(roles)):
+            if roles[i].id not in ('ambassador', 'hotpotato'):
+                settings['drunk'] = roles.pop(i)
+                break
+
     if settings['bury']:
-        settings['bury'] = roles.pop()
+        for i in range(len(roles)):
+            if roles[i].id not in cards.no_bury and \
+                    (roles[i].id not in ('president', 'bomber') or daughter_martyr) and \
+                    (roles[i].id not in ('doctor', 'engineer') or nurse_tinkerer):
+                settings['bury'] = roles.pop(i)
+                break
 
     rooms = list()
     while len(rooms) < len(roles) / 2:
