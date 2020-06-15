@@ -173,9 +173,12 @@ no_bury = {
     'romeo', 'juliet',
     'wife', 'mistress',
     'ahab', 'moby',
+    'sniper', 'target', 'decoy'
 }
 
 
-# Not included: Agent, Agoraphobe, Anarchist, Ambassador, Blind, Bouncer, Clone, Clown, Conman, Cupid/Eris,
-# Dr. Boom/Tuesday Knight, Enforcer, Invincible, Mastermind, Mayor, Mime, Minion, Paparazzo, Robot, Security,
-# Traveler, Usurper, Nuclear Tyrant, and all roles that involve burying a card.
+# Not included yet: Agent, Agoraphobe, Anarchist, Ambassador, Bouncer, Clone, Conman, Cupid/Eris,
+# Dr. Boom/Tuesday Knight, Enforcer, Invincible, Mastermind, Mayor, Minion, Robot, Security,
+# Traveler, Usurper.
+
+# Not useful to include: Blind, Clown, Mime, Mummy, Paparazzo
