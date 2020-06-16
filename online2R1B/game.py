@@ -575,6 +575,8 @@ def deal_roles(num_players: int, choices: List[int]) -> Tuple[List['Role'], List
     nurse_tinkerer = False
     for choice in choices:
         role_choice = cards.roleList[choice]
+        if choice == 11 or (31 < choice < 35 and not settings['bury']):
+            num_roles += 1
         if len(roles) + len(role_choice) <= num_roles:
             for r in role_choice:
                 if 'conditions' in r:
@@ -587,14 +589,12 @@ def deal_roles(num_players: int, choices: List[int]) -> Tuple[List['Role'], List
                 roles[1].conditions.append('broken')
             elif choice == 11:
                 settings['drunk'] = True
-                num_roles += 1
             elif choice == 32:
                 daughter_martyr = True
             elif choice == 33:
                 nurse_tinkerer = True
             if 31 < choice < 35 and not settings['bury']:
                 settings['bury'] = True
-                num_roles += 1
 
     if doctor_engineer and settings['bury']:
         for role in roles:
