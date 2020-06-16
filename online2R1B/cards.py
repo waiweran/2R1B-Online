@@ -141,8 +141,8 @@ roleList = [
         {'id': 'redmedic', 'source': '/static/Cards/RedMedic.png', 'team': 2},
     ],
     [
-        {'id': 'bluepsychologist', 'source': '/static/Cards/BlueMedic.png', 'team': 1},
-        {'id': 'redpsychologist', 'source': '/static/Cards/RedMedic.png', 'team': 2},
+        {'id': 'bluepsychologist', 'source': '/static/Cards/BluePsychologist.png', 'team': 1},
+        {'id': 'redpsychologist', 'source': '/static/Cards/RedPsychologist.png', 'team': 2},
     ],
     [
         {'id': 'rival', 'source': '/static/Cards/Rival.png', 'team': 0},

@@ -98,6 +98,7 @@ class Game:
                         'action': 'updateplayer',
                         'role': player.role.source,
                         'conditions': list(player.conditions),
+                        'shares': len(player.shares),
                     }))
 
     def mark_color_share(self, player1: 'Player', player2: 'Player'):
@@ -121,11 +122,13 @@ class Game:
                 'action': 'updateplayer',
                 'role': player1.role.source,
                 'conditions': list(player1.conditions),
+                'shares': len(player1.shares),
             }))
             self.actions.append(Action(player2.num, {
                 'action': 'updateplayer',
                 'role': player2.role.source,
                 'conditions': list(player2.conditions),
+                'shares': len(player2.shares),
             }))
 
     def mark_card_share(self, player1: 'Player', player2: 'Player'):
@@ -145,11 +148,13 @@ class Game:
                 'action': 'updateplayer',
                 'role': player1.role.source,
                 'conditions': list(player1.conditions),
+                'shares': len(player1.shares),
             }))
             self.actions.append(Action(player2.num, {
                 'action': 'updateplayer',
                 'role': player2.role.source,
                 'conditions': list(player2.conditions),
+                'shares': len(player2.shares),
             }))
 
     def end_round(self):
@@ -194,11 +199,11 @@ class Game:
 
         if 'ill' in president.conditions:
             if self.settings['bury'].id != 'doctor' or 'nursed' not in president.conditions:
-                president.conditions.remove('ill')
+                president.conditions.discard('ill')
                 president.conditions.add('dead')
         if 'broken' in bomber.conditions:
             if self.settings['bury'].id != 'engineer' or 'tinkered' not in bomber.conditions:
-                bomber.conditions.remove('broken')
+                bomber.conditions.discard('broken')
                 bomber.conditions.add('fizzled')
         else:
             for player in self.players:
@@ -326,7 +331,7 @@ class Game:
                 winners.append(player.room != bomber.room)
 
             elif player.role.id == 'butler':
-                if player.room != president.room:
+                if player.room == president.room:
                     maid_room = None
                     for m_player in self.players:
                         if m_player.role.id == 'maid':
@@ -336,7 +341,7 @@ class Game:
                 else:
                     winners.append(False)
             elif player.role.id == 'maid':
-                if player.room != president.room:
+                if player.room == president.room:
                     butler_room = None
                     for m_player in self.players:
                         if m_player.role.id == 'butler':
@@ -347,7 +352,7 @@ class Game:
                     winners.append(False)
 
             elif player.role.id == 'romeo':
-                if player.room != bomber.room:
+                if player.room == bomber.room:
                     juliet_room = None
                     for m_player in self.players:
                         if m_player.role.id == 'juliet':
@@ -357,7 +362,7 @@ class Game:
                 else:
                     winners.append(False)
             elif player.role.id == 'juliet':
-                if player.room != bomber.room:
+                if player.room == bomber.room:
                     romeo_room = None
                     for m_player in self.players:
                         if m_player.role.id == 'romeo':
@@ -391,7 +396,7 @@ class Game:
             else:
                 winners.append(False)
 
-        if nt_index:
+        if nt_index >= 0:
             for i in range(len(winners)):
                 winners[i] = (i == nt_index)
         return winners
@@ -440,6 +445,10 @@ class Player:
             self.conditions.discard('ill')
         elif player.role.id == 'engineer':
             self.conditions.discard('broken')
+        elif player.role.id == 'nurse':
+            self.conditions.add('nursed')
+        elif player.role.id == 'tinkerer':
+            self.conditions.add('tinkered')
         elif player.role.id in ('bluecriminal', 'redcriminal'):
             if 'foolish' in self.conditions:
                 self.conditions.discard('foolish')
@@ -462,22 +471,22 @@ class Player:
 
         # Removing Conditions
         elif player.role.id in ('redmedic', 'bluemedic'):
-            self.conditions.remove('coy')
-            self.conditions.remove('shy')
-            self.conditions.remove('foolish')
-            self.conditions.remove('savvy')
-            self.conditions.remove('paranoid')
-            self.conditions.remove('honest')
-            self.conditions.remove('liar')
-            self.conditions.remove('zombie')
-            self.conditions.remove('inlove')
-            self.conditions.remove('inhate')
+            self.conditions.discard('coy')
+            self.conditions.discard('shy')
+            self.conditions.discard('foolish')
+            self.conditions.discard('savvy')
+            self.conditions.discard('paranoid')
+            self.conditions.discard('honest')
+            self.conditions.discard('liar')
+            self.conditions.discard('zombie')
+            self.conditions.discard('in love')
+            self.conditions.discard('in hate')
         elif player.role.id in ('redpsychologist', 'bluepsychologist'):
-            self.conditions.remove('coy')
-            self.conditions.remove('shy')
-            self.conditions.remove('foolish')
-            self.conditions.remove('savvy')
-            self.conditions.remove('paranoid')
+            self.conditions.discard('coy')
+            self.conditions.discard('shy')
+            self.conditions.discard('foolish')
+            self.conditions.discard('savvy')
+            self.conditions.discard('paranoid')
         else:
             change = False
 
@@ -491,6 +500,7 @@ class Player:
                 'action': 'updateplayer',
                 'role': self.role.source,
                 'conditions': list(self.conditions),
+                'shares': len(self.shares),
             }))
 
         return actions
@@ -505,6 +515,7 @@ class Player:
                 'action': 'updateplayer',
                 'role': self.role.source,
                 'conditions': list(self.conditions),
+                'shares': len(self.shares),
             }))
 
         return actions
@@ -512,15 +523,16 @@ class Player:
     def mark_private_reveal(self, player: 'Player') -> List['Action']:
         actions = []
         if self.role.id in ('redpsychologist', 'bluepsychologist'):
-            player.conditions.remove('coy')
-            player.conditions.remove('shy')
-            player.conditions.remove('foolish')
-            player.conditions.remove('savvy')
-            player.conditions.remove('paranoid')
+            player.conditions.discard('coy')
+            player.conditions.discard('shy')
+            player.conditions.discard('foolish')
+            player.conditions.discard('savvy')
+            player.conditions.discard('paranoid')
             actions.append(Action(player.num, {
                 'action': 'updateplayer',
                 'role': player.role.source,
                 'conditions': list(player.conditions),
+                'shares': len(self.shares),
             }))
         return actions
 

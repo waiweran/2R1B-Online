@@ -355,6 +355,7 @@ function initialize(game, myPlayerNum) {
     myCard.src = game.myRole;
     var myPlayer = null;
     var conditions = game.myConditions;
+    var numShares = 0;
     var publicRevealBtn = document.getElementById('publicreveal');
     var permanentPublicRevealBtn = document.getElementById('permanentpublicreveal');
     publicRevealBtn.onclick = function() {
@@ -467,7 +468,8 @@ function initialize(game, myPlayerNum) {
     function updateConditions() {
         publicRevealBtn.disabled = false;
         permanentPublicRevealBtn.disabled = false;
-        if(conditions.includes("coy" || conditions.includes("shy"))) {
+        if(conditions.includes("coy" || conditions.includes("shy") || 
+                conditions.includes("savvy") || conditions.includes("paranoid"))) {
             publicRevealBtn.disabled = true;
             permanentPublicRevealBtn.disabled = true;
         }
@@ -483,6 +485,13 @@ function initialize(game, myPlayerNum) {
                 player.cardShareBtn.disabled = true;
                 player.colorShareBtn.disabled = true;
                 player.privateRevealBtn.disabled = true;
+            }
+            if(conditions.includes("savvy") || conditions.includes("paranoid")) {
+                player.colorShareBtn.disabled = true;
+                player.privateRevealBtn.disabled = true;
+            }
+            if(conditions.includes("paranoid") && numShares > 1) {
+                player.cardShareBtn.disabled = true;
             }
             if(myPlayerNum == player.num) {
                 player.cardShareBtn.disabled = true;
@@ -512,6 +521,12 @@ function initialize(game, myPlayerNum) {
             }
             else if(conditions[i] == 'broken') {
                 condstr = condstr + 'Broken';
+            }
+            else if(conditions[i] == 'nursed') {
+                condstr = condstr + 'Nursed';
+            }
+            else if(conditions[i] == 'tinkered') {
+                condstr = condstr + 'Tinkered';
             }
             else if(conditions[i] == 'dead') {
                 condstr = condstr + 'Dead';
@@ -953,6 +968,7 @@ function initialize(game, myPlayerNum) {
             myCard.src = msg.role;
             game.myRole = msg.role;
             conditions = msg.conditions;
+            numShares = msg.shares;
             updateConditions();
         }
         else if(msg.action == 'setupround') {

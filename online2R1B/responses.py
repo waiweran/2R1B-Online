@@ -112,7 +112,8 @@ def handle_player_update(json):
             'numHostages': game_obj.rounds[game_obj.round]['hostages'],
             'leaders': game_obj.leaders,
             'myShare': {'card': sender.card_share, 'color': sender.color_share},
-            'myVotes': sender.my_votes
+            'myVotes': sender.my_votes,
+            'myShareCount': len(sender.shares),
         }, room=request.sid)
 
 
