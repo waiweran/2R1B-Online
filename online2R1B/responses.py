@@ -95,9 +95,13 @@ def handle_player_update(json):
                 share_status = 'card'
             elif player.color_share == sender.num:
                 share_status = 'color'
+            role = None
+            if player.revealed and player.room == sender.room:
+                role = player.role.source
             players.append({
                 'name': player.name,
                 'room': player.room,
+                'role': role,
                 'share': share_status,
                 'votes': player.votes,
             })
@@ -114,7 +118,7 @@ def handle_player_update(json):
             'myShare': {'card': sender.card_share, 'color': sender.color_share},
             'myVotes': sender.my_votes,
             'myShareCount': len(sender.shares),
-        }, room=request.sid)
+        }, room=sender.sid)
 
 
 @socketio.on('quick event')

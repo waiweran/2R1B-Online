@@ -80,14 +80,22 @@ class Game:
             rooms = list()
             for player in self.players:
                 rooms.append(player.room)
-            self.actions.append(Action('all', {
-                'action': 'setupround',
-                'round': len(self.rounds) - self.round,
-                'time': self.rounds[self.round]['time'],
-                'numHostages': self.rounds[self.round]['hostages'],
-                'rooms': rooms,
-                'leaders': self.leaders,
-            }))
+            for player in self.players:
+                roles = list()
+                for sub_player in self.players:
+                    if sub_player.revealed and sub_player.room == player.room:
+                        roles.append(sub_player.role.source)
+                    else:
+                        roles.append(None)
+                self.actions.append(Action(player.num, {
+                    'action': 'setupround',
+                    'round': len(self.rounds) - self.round,
+                    'time': self.rounds[self.round]['time'],
+                    'numHostages': self.rounds[self.round]['hostages'],
+                    'rooms': rooms,
+                    'leaders': self.leaders,
+                    'roles': roles,
+                }))
         if self.round == len(self.rounds) - 2 and self.settings['drunk']:
             for player in self.players:
                 if player.role.id == 'drunk':
@@ -110,8 +118,10 @@ class Game:
             temp = player1.role
             player1.role = player2.role
             player2.role = temp
+            player1.shares.clear()
             player1.conditions.clear()
             player1.conditions.update(player1.role.conditions)
+            player2.shares.clear()
             player2.conditions.clear()
             player2.conditions.update(player2.role.conditions)
             if player1.role.id == 'leprechaun':
@@ -418,6 +428,7 @@ class Player:
     prediction: Optional[int]
     partner: Optional[int]
     leprechaun: bool
+    revealed: bool
 
     def __init__(self, name, num, role, room):
         self.name = name
@@ -434,6 +445,7 @@ class Player:
         self.prediction = None
         self.partner = None
         self.leprechaun = (role.id == 'leprechaun')
+        self.revealed = False
 
     def mark_card_share(self, player: 'Player') -> List['Action']:
         actions = list()
@@ -490,6 +502,10 @@ class Player:
         else:
             change = False
 
+        # Paranoid Condition
+        if 'paranoid' in self.conditions:
+            change = True
+
         # Zombie Condition
         if player.role.team == 3 or 'zombie' in player.conditions:
             self.conditions.add('zombie')
@@ -540,6 +556,7 @@ class Player:
         return []
 
     def mark_permanent_public_reveal(self) -> List['Action']:
+        self.revealed = True
         return []
 
 

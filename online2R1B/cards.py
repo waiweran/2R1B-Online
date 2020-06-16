@@ -84,7 +84,7 @@ roleList = [
         {'id': 'drunk', 'source': '/static/Cards/Drunk.png', 'team': 5},
     ],
     [
-        {'id': 'leprechaun', 'source': '/static/Cards/Leprechaun.png', 'team': 4},
+        {'id': 'leprechaun', 'source': '/static/Cards/Leprechaun.png', 'team': 4, 'conditions': ['foolish']},
     ],
     [
         {'id': 'gambler', 'source': '/static/Cards/Gambler.png', 'team': 0},
@@ -151,7 +151,7 @@ roleList = [
         {'id': 'survivor', 'source': '/static/Cards/Survivor.png', 'team': 0},
     ],
     [
-        {'id': 'nucleartyrant', 'source': '/static/Cards/NuclearTyrant.png', 'team': 0},
+        {'id': 'nucleartyrant', 'source': '/static/Cards/NuclearTyrant.png', 'team': 0, 'conditions': ['foolish']},
     ],
     [
         {'id': 'presidentsdaughter', 'source': '/static/Cards/PresidentsDaughter.png', 'team': 1},

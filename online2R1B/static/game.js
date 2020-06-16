@@ -490,7 +490,7 @@ function initialize(game, myPlayerNum) {
                 player.colorShareBtn.disabled = true;
                 player.privateRevealBtn.disabled = true;
             }
-            if(conditions.includes("paranoid") && numShares > 1) {
+            if(conditions.includes("paranoid") && numShares >= 1) {
                 player.cardShareBtn.disabled = true;
             }
             if(myPlayerNum == player.num) {
@@ -543,12 +543,26 @@ function initialize(game, myPlayerNum) {
             else if(conditions[i] == 'liar') {
                 condstr = condstr + 'Liar';
             }
+            else if(conditions[i] == 'savvy') {
+                condstr = condstr + 'Savvy';
+            }
+            else if(conditions[i] == 'paranoid') {
+                condstr = condstr + 'Paranoid';
+            }
 
             if(i < conditions.length - 1) {
                 condstr = condstr + ", ";
             }
         }
         document.getElementById('myconditions').innerHTML = condstr;
+    }
+
+    function updateRoles() {
+        for(var player of players) {
+            if(player.role != undefined) {
+                player.permanentRole.src = player.role;                
+            }
+        }
     }
 
     function setupRound() {
@@ -942,8 +956,9 @@ function initialize(game, myPlayerNum) {
             cardShow(players[msg.target], msg.role, 'Public Reveal');
         }
         else if(msg.action == 'permanentpublicreveal') {
-            players[msg.target].permanentRole.src = msg.role;
+            players[msg.target].role = msg.role;
             cardShow(players[msg.target], msg.role, 'Permanent Reveal');
+            updateRoles();
         }
         else if(msg.action == 'colorshare') {
             players[msg.target].colorShareBtn.style.backgroundColor = null;
@@ -974,12 +989,16 @@ function initialize(game, myPlayerNum) {
         else if(msg.action == 'setupround') {
             for(var i = 0; i < game.numPlayers; i++) {
                 players[i].room = msg.rooms[i];
+                if(msg.roles[i] != null) {
+                    players[i].role = msg.roles[i];
+                }
             }
             round.num = msg.round;
             round.time = msg.time;
             round.hostages = msg.numHostages;
             leader = msg.leaders[myPlayer.room];
             updateVoting();
+            updateRoles();
             setupRound();
         }
         else if(msg.action == 'pause') {
