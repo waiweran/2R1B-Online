@@ -10,41 +10,41 @@ function createGame() {
     var numGameCards = 0;
     var expand = false;
     var allCards = [
-        {"name1": "Doctor", "name3": "Engineer", "class": "blueredteam", "id": 1},
-        {"name1": "Blue Spy", "name3": "Red Spy", "class": "blueredteam", "id": 2},
-        {"name1": "Coy Boy", "name3": "Coy Boy", "class": "blueredteam", "id": 3},
-        {"name1": "Shy Guy", "name3": "Shy Guy", "class": "blueredteam", "id": 7},
-        {"name1": "Thug", "name3": "Thug", "class": "blueredteam", "id": 8},
-        {"name1": "Criminal", "name3": "Criminal", "class": "blueredteam", "id": 9},
-        {"name1": "Dealer", "name3": "Dealer", "class": "blueredteam", "id": 10},
-        {"name1": "Angel", "name3": "Angel", "class": "blueredteam", "id": 5},
-        {"name1": "Demon", "name3": "Demon", "class": "blueredteam", "id": 6},
-        {"name1": "Negotiator", "name3": "Negotiator", "class": "blueredteam", "id": 25},
-        {"name1": "Paranoid", "name3": "Paranoid", "class": "blueredteam", "id": 26},
-        {"name1": "Medic", "name3": "Medic", "class": "blueredteam", "id": 27},
-        {"name1": "Psychologist", "name3": "Psychologist", "class": "blueredteam", "id": 28},
-        {"name2": 'Gambler', "class": "grayteam", "id": 13},
-        {"name2": 'MI6', "class": "grayteam", "id": 4},
-        {"name2": 'Nuclear Tyrant', "class": "grayteam", "id": 31},
-        {"name2": 'Hot Potato', "class": "grayteam", "id": 15},
-        {"name2": 'Leprechaun', "class": "greenteam", "id": 12},
-        {"name1": "Sniper", "name2": "Target", "name3": "Decoy", "class": "grayteam", "id": 16},
-        {"name1": "Ahab", "name3": "Moby", "class": "grayteam", "id": 17},
-        {"name1": "Butler", "name3": "Maid", "class": "grayteam", "id": 20},
-        {"name1": "Romeo", "name3": "Juliet", "class": "grayteam", "id": 23},
-        {"name1": "Wife", "name3": "Mistress", "class": "grayteam", "id": 24},
-        {"name2": 'Bomb-Bot', "class": "grayteam", "id": 18},
-        {"name2": 'Queen', "class": "grayteam", "id": 19},
-        {"name2": 'Intern', "class": "grayteam", "id": 21},
-        {"name2": 'Victim', "class": "grayteam", "id": 22},
-        {"name2": 'Rival', "class": "grayteam", "id": 29},
-        {"name2": 'Survivor', "class": "grayteam", "id": 30},
-        {"name1": "President's Daughter", "name3": "Martyr", "class": "blueredteam", "id": 32},
-        {"name1": "Nurse", "name3": "Tinkerer", "class": "blueredteam", "id": 33},
-        {"name2": "Private Eye", "class": "grayteam", "id": 34},
-        {"name2": 'Drunk', "class": "unknownteam", "id": 11},
-        {"name2": 'Zombie', "class": "greenteam", "id": 14},
-        {"name1": "Blue Team", "name3": "Red Team", "class": "blueredteam", "id": 0},
+        {"name1": "Doctor", "name3": "Engineer", "class": "blueredteam", "num": 2, "id": 1},
+        {"name1": "Blue Spy", "name3": "Red Spy", "class": "blueredteam", "num": 2, "id": 2},
+        {"name1": "Coy Boy", "name3": "Coy Boy", "class": "blueredteam", "num": 2, "id": 3},
+        {"name1": "Shy Guy", "name3": "Shy Guy", "class": "blueredteam", "num": 2, "id": 7},
+        {"name1": "Thug", "name3": "Thug", "class": "blueredteam", "num": 2, "id": 8},
+        {"name1": "Criminal", "name3": "Criminal", "class": "blueredteam", "num": 2, "id": 9},
+        {"name1": "Dealer", "name3": "Dealer", "class": "blueredteam", "num": 2, "id": 10},
+        {"name1": "Angel", "name3": "Angel", "class": "blueredteam", "num": 2, "id": 5},
+        {"name1": "Demon", "name3": "Demon", "class": "blueredteam", "num": 2, "id": 6},
+        {"name1": "Negotiator", "name3": "Negotiator", "class": "blueredteam", "num": 2, "id": 25},
+        {"name1": "Paranoid", "name3": "Paranoid", "class": "blueredteam", "num": 2, "id": 26},
+        {"name1": "Medic", "name3": "Medic", "class": "blueredteam", "num": 2, "id": 27},
+        {"name1": "Psychologist", "name3": "Psychologist", "class": "blueredteam", "num": 2, "id": 28},
+        {"name2": 'Gambler', "class": "grayteam", "num": 1, "id": 13},
+        {"name2": 'MI6', "class": "grayteam", "num": 1, "id": 4},
+        {"name2": 'Nuclear Tyrant', "class": "grayteam", "num": 1, "id": 31},
+        {"name2": 'Hot Potato', "class": "grayteam", "num": 1, "id": 15},
+        {"name2": 'Leprechaun', "class": "greenteam", "num": 1, "id": 12},
+        {"name1": "Sniper", "name2": "Target", "name3": "Decoy", "class": "grayteam", "num": 3, "id": 16},
+        {"name1": "Ahab", "name3": "Moby", "class": "grayteam", "num": 2, "id": 17},
+        {"name1": "Butler", "name3": "Maid", "class": "grayteam", "num": 2, "id": 20},
+        {"name1": "Romeo", "name3": "Juliet", "class": "grayteam", "num": 2, "id": 23},
+        {"name1": "Wife", "name3": "Mistress", "class": "grayteam", "num": 2, "id": 24},
+        {"name2": 'Bomb-Bot', "class": "grayteam", "num": 1, "id": 18},
+        {"name2": 'Queen', "class": "grayteam", "num": 1, "id": 19},
+        {"name2": 'Intern', "class": "grayteam", "num": 1, "id": 21},
+        {"name2": 'Victim', "class": "grayteam", "num": 1, "id": 22},
+        {"name2": 'Rival', "class": "grayteam", "num": 1, "id": 29},
+        {"name2": 'Survivor', "class": "grayteam", "num": 1, "id": 30},
+        {"name1": "President's Daughter", "name3": "Martyr", "class": "blueredteam", "num": 2, "bury": true, "id": 32},
+        {"name1": "Nurse", "name3": "Tinkerer", "class": "blueredteam", "num": 2, "bury": true, "id": 33},
+        {"name2": "Private Eye", "class": "grayteam", "num": 1, "bury": true, "id": 34},
+        {"name2": 'Drunk', "class": "unknownteam", "num": 0, "id": 11},
+        {"name2": 'Zombie', "class": "greenteam", "num": 1, "id": 14},
+        {"name1": "Blue Team", "name3": "Red Team", "class": "blueredteam", "num": 2, "id": 0},
     ];
     for(var card of allCards) {
         var cardElement = document.createElement('SPAN');
@@ -115,27 +115,40 @@ function createGame() {
     }
 
     document.getElementById('createbtn').onclick = function(e) {
-        var selectedCards = []
+        var selectedCards = [];
+        var numPlayers = 2;
+        var burying = false;
         for(var element of document.getElementById('gamecards').children) {
             if(element.card != undefined) {
                 selectedCards.push(element.card.id);
+                numPlayers += element.card.num;
+                if(element.card.bury && !burying) {
+                    burying = true;
+                    numPlayers--;
+                }
             }
         }
-        document.getElementById('rolesinput').value = JSON.stringify(selectedCards);
-        document.getElementById('gameform').submit()
+        if(numPlayers >= 6) {
+            document.getElementById('rolesinput').value = JSON.stringify(selectedCards);
+            document.getElementById('numplayersinput').value = numPlayers;
+            document.getElementById('expandinput').value = expand;
+            document.getElementById('gameform').submit()            
+        }
     }
 }
 
 
-function collectPlayers(code) {
+function collectPlayers(code, playerTarget, expandable) {
+    document.getElementById("gamebox").style.display = "none";
 
+    // Initiate force start for testing
     if(getCookie("go") != null) {
         socket.emit('force start', {"code": code});
     }
 
     // Allow players with valid game cookies to rejoin
     var gameId = getCookie('id');
-    var plNum = getCookie('num');
+    var plNum = parseInt(getCookie('num'));
     if(gameId != null && plNum != null) {
         var gotIn = false;
         socket.emit('game reenter', {'id': gameId, 'sender': plNum})
@@ -144,7 +157,7 @@ function collectPlayers(code) {
                 gotIn = true;
                 document.getElementById('joinbox').style.display = "none";
                 document.getElementById('gamebox').style.display = "";
-                initialize(msg, plNum);
+                initialize(msg, plNum, true);
             }
         });
         var currentMemberCheck = setInterval(function runCheck() {
@@ -157,7 +170,6 @@ function collectPlayers(code) {
     }
 
     // Setup player joining view
-    document.getElementById("gamebox").style.display = "none";
     var players = null;
     var readies = 0;
     var playerNum = null;
@@ -227,6 +239,12 @@ function collectPlayers(code) {
                         document.getElementById("p" + (j+1) + "rdy").id = "p" + j + "rdy";
                         document.getElementById("p" + (j+1) + "rdybreak").id = "p" + j + "rdybreak";
                     }
+                    if(expandable) {
+                        document.getElementById("players").innerHTML = "Players (" + players.length + " of " + playerTarget + "+)";
+                    }
+                    else {
+                        document.getElementById("players").innerHTML = "Players (" + players.length + " of " + playerTarget + ")";
+                    }
                     i--;
                 }
                 else {
@@ -258,6 +276,12 @@ function collectPlayers(code) {
             var rdybreak = document.createElement('BR');
             rdybreak.id = "p" + addedNum + "rdybreak"
             readyBox.appendChild(rdybreak);
+            if(expandable) {
+                document.getElementById("players").innerHTML = "Players (" + players.length + " of " + playerTarget + "+)";
+            }
+            else {
+                document.getElementById("players").innerHTML = "Players (" + players.length + " of " + playerTarget + ")";
+            }
         }
         else if(msg.action == "list request") {
             if(players != null) {
@@ -285,6 +309,12 @@ function collectPlayers(code) {
                     rdybreak.id = "p" + player.num + "rdybreak"
                     readyBox.appendChild(rdybreak);
                 }
+                if(expandable) {
+                    document.getElementById("players").innerHTML = "Players (" + players.length + " of " + playerTarget + "+)";
+                }
+                else {
+                    document.getElementById("players").innerHTML = "Players (" + players.length + " of " + playerTarget + ")";
+                }
                 submitBtn.disabled = false;
             }
         }
@@ -301,7 +331,8 @@ function collectPlayers(code) {
                 rdyLbl.style.color = "red";
             }
             readies += msg.status;
-            if(readies >= 6 && readies == players.length && playerNum == 0) {
+            if((readies == playerTarget || readies >= playerTarget && expandable) 
+                && readies == players.length && playerNum == 0) {
                 var playerNames = [];
                 for(var player of players) {
                     playerNames.push(player.name);
@@ -322,7 +353,7 @@ function collectPlayers(code) {
         }
     });
     socket.on('game enter', function(gameMsg) {
-        initialize(gameMsg, playerNum);
+        initialize(gameMsg, playerNum, false);
     });
 
     socket.on('force start', function(msg) {
@@ -337,7 +368,7 @@ function collectPlayers(code) {
 }
 
 
-function initialize(game, myPlayerNum) {
+function initialize(game, myPlayerNum, rejoin) {
 
     // Write game ID and player number to cookies
     setCookie("id", game.id, 1);
@@ -379,6 +410,9 @@ function initialize(game, myPlayerNum) {
     // General Setup
     var round = {"num": game.round, "time": game.time, "hostages": game.numHostages}
     var leader = null;
+    var sentHostages = [];
+    var currentlyShowing = false;
+    var showQueue = [];
     var expandTarget = null;
     var expandElement = document.getElementById('expandelement');
     expandelement.style.display = "none";
@@ -410,6 +444,39 @@ function initialize(game, myPlayerNum) {
     updateConditions();
     setupRound();
 
+    // Setup current game state if rejoining
+    if(rejoin) {
+        console.log(game);
+        for(var i = 0; i < game.numPlayers; i++) {
+            var player = players[i];
+            player.role = game.players[i].role;
+            player.votes = game.players[i].votes;
+            player.myVote = game.myVotes.includes(i);
+            if(game.players[i].share == 'card') {
+                player.cardShareBtn.style.backgroundColor = "lightgreen";
+            }
+            else if(game.players[i].share == 'color') {
+                player.colorShareBtn.style.backgroundColor = "lightgreen";
+            }
+        }
+        numShares = game.myShareCount;
+        if(game.myShare.card != null) {
+            players[game.myShare.card].cardShareBtn.style.backgroundColor = "skyblue";
+        }
+        else if(game.myShare.color != null) {
+            players[game.myShare.color].colorShareBtn.style.backgroundColor = "skyblue";
+        }
+        leader = game.leader
+        sentHostages = game.sentHostages
+        if(leader != null) {
+            updateVoting();            
+        }
+        updateRoles();
+        if(game.startTime != null) {
+            startRound(game.startTime);            
+        }
+    }
+
     function makePlayer(i) {
         var player = {
             "name": game.players[i].name, 
@@ -432,6 +499,13 @@ function initialize(game, myPlayerNum) {
             expandTarget = null;
         }
         player.element.appendChild(player.permanentRole)
+        player.nominateBtn = document.createElement('BUTTON');
+        player.votes = 0;
+        player.nominateBtn.innerHTML = "Nominate Leader";
+        player.nominateBtn.onclick = function(e) {
+            gameUpdate({"action": "nominate", "target": i});
+        };
+        player.element.appendChild(player.nominateBtn);
         player.privateRevealBtn = document.createElement('BUTTON');
         player.privateRevealBtn.innerHTML = "Private Reveal";
         player.privateRevealBtn.onclick = function(e) {
@@ -451,13 +525,6 @@ function initialize(game, myPlayerNum) {
              gameUpdate({"action": "cardshare", "target": i});
         };
         player.element.appendChild(player.cardShareBtn);
-        player.nominateBtn = document.createElement('BUTTON');
-        player.votes = 0;
-        player.nominateBtn.innerHTML = "Nominate as Leader";
-        player.nominateBtn.onclick = function(e) {
-            gameUpdate({"action": "nominate", "target": i});
-        };
-        player.element.appendChild(player.nominateBtn);
         player.element.appendChild(document.createElement('BR'));
         if(myPlayerNum == i) {
             player.nominateBtn.disabled = true;
@@ -579,6 +646,7 @@ function initialize(game, myPlayerNum) {
         room2.innerHTML = '<h2>Room 2</h2>';
         myRoom.innerHTML = '';
         myHostages.innerHTML = '';
+        sentHostages = [];
 
         // Put players in the rooms
         for(var player of players) {
@@ -618,7 +686,7 @@ function initialize(game, myPlayerNum) {
         document.getElementById('fade').style.display = "none";
 
         // Start the round timer
-        var roundEndTime = startTime + 60000*round.time;
+        var roundEndTime = startTime + 6000*round.time;
         var roundTimer = setInterval(function runTimer() {
             var timeLeft = roundEndTime - Date.now();
             timer.innerHTML = "Round " + round.num + "<br>" + Math.floor(timeLeft/60000)
@@ -687,6 +755,16 @@ function initialize(game, myPlayerNum) {
                 myHostages.append(makeHostage(player));
             }
         }
+        if(sentHostages.includes(myPlayer.room)) {
+            document.getElementById('hostagesubtitle').innerHTML = "Wait for Other Room";
+            sendHostageBtn.style.display = "none";
+            for(var player of players) {
+                if(player.hostageBtn != undefined) {
+                    player.hostageBtn.disabled = true;
+                    player.hostageBtn.innerHTML = "X";
+                }
+            }
+        }
 
         function makeHostage(player) {
             var hostageItem = document.createElement('DIV');
@@ -726,35 +804,67 @@ function initialize(game, myPlayerNum) {
     }
 
     function teamShow(player, team, title) {
-        document.getElementById("sharetitle").innerHTML = title;
-        document.getElementById("sharename").innerHTML = player.name;
-        var shareCard = document.getElementById("sharecard");
-        shareCard.src = team;
-        shareCard.style.height = "14%";
-        var shareBox = document.getElementById("sharing");
-        var fadeBox = document.getElementById('fade');
-        document.getElementById("shareclose").onclick = function(e) {
-            shareBox.style.display = "none";
-            fadeBox.style.display = "none";
+        if(currentlyShowing) {
+            showQueue.push({"player": player, "team": team, "title": title})
         }
-        shareBox.style.display = "";
-        fadeBox.style.display = "";
+        else {
+            currentlyShowing = true
+            document.getElementById("sharetitle").innerHTML = title;
+            document.getElementById("sharename").innerHTML = player.name;
+            var shareCard = document.getElementById("sharecard");
+            shareCard.src = team;
+            shareCard.style.height = "14%";
+            var shareBox = document.getElementById("sharing");
+            var fadeBox = document.getElementById('fade');
+            document.getElementById("shareclose").onclick = function(e) {
+                shareBox.style.display = "none";
+                fadeBox.style.display = "none";
+                currentlyShowing = false;
+                if(showQueue.length > 0) {
+                    var info = showQueue.shift()
+                    if(info.team != undefined) {
+                        teamShow(info.player, info.team, info.title);
+                    }
+                    else {
+                        cardShow(info.player, info.source, info.title);
+                    }
+                }
+            }
+            shareBox.style.display = "";
+            fadeBox.style.display = "";
+        }
     }
 
     function cardShow(player, source, title) {
-        document.getElementById("sharetitle").innerHTML = title;
-        document.getElementById("sharename").innerHTML = player.name;
-        var shareCard = document.getElementById("sharecard");
-        shareCard.src = source;
-        shareCard.style.height = "60%";
-        var shareBox = document.getElementById("sharing");
-        var fadeBox = document.getElementById('fade');
-        document.getElementById("shareclose").onclick = function(e) {
-            shareBox.style.display = "none";
-            fadeBox.style.display = "none";
+        if(currentlyShowing) {
+            showQueue.push({"player": player, "source": source, "title": title})
         }
-        shareBox.style.display = "";
-        fadeBox.style.display = "";
+        else {
+            currentlyShowing = true
+            document.getElementById("sharetitle").innerHTML = title;
+            document.getElementById("sharename").innerHTML = player.name;
+            var shareCard = document.getElementById("sharecard");
+            shareCard.src = source;
+            shareCard.style.height = "60%";
+            var shareBox = document.getElementById("sharing");
+            var fadeBox = document.getElementById('fade');
+            document.getElementById("shareclose").onclick = function(e) {
+                shareBox.style.display = "none";
+                fadeBox.style.display = "none";
+                currentlyShowing = false;
+                if(showQueue.length > 0) {
+                    var info = showQueue.shift()
+                    if(info.team != undefined) {
+                        teamShow(info.player, info.team, info.title);
+                    }
+                    else {
+                        cardShow(info.player, info.source, info.title);
+                    }
+                }
+            }
+            shareBox.style.display = "";
+            fadeBox.style.display = "";
+        }
     }
 
     function updateVoting() {
@@ -765,11 +875,11 @@ function initialize(game, myPlayerNum) {
                     player.nominateBtn.disabled = true;
                 }
                 else if(player.votes > 0) {
-                    player.nominateBtn.innerHTML = "Pass Leadership (" + player.votes + ")";
+                    player.nominateBtn.innerHTML = "Pass Leader (" + player.votes + ")";
                     player.nominateBtn.disabled = false;
                 }
                 else {
-                    player.nominateBtn.innerHTML = "Pass on Leadership";
+                    player.nominateBtn.innerHTML = "Pass Leadership";
                     player.nominateBtn.disabled = false;                    
                 }
             }
@@ -782,15 +892,15 @@ function initialize(game, myPlayerNum) {
                 }
                 else if(player.votes > 0) {
                     if(player.myVote) {
-                        player.nominateBtn.innerHTML = "Undo vote (" + player.votes + " votes)";
+                        player.nominateBtn.innerHTML = "Undo vote (" + player.votes + ")";
                     }
                     else {
-                        player.nominateBtn.innerHTML = "Vote for (" + player.votes + " votes)";                            
+                        player.nominateBtn.innerHTML = "Vote for (" + player.votes + ")";                            
                     }
                     player.nominateBtn.disabled = false;
                 }
                 else {
-                    player.nominateBtn.innerHTML = "Nominate as Leader";
+                    player.nominateBtn.innerHTML = "Nominate Leader";
                     player.nominateBtn.disabled = false;
                 }
             }

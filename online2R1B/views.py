@@ -1,5 +1,5 @@
 from flask import render_template, request, redirect, session
-from online2R1B import app, db, models
+from online2R1B import app, db, models, cards
 
 import random
 import pickle
@@ -21,8 +21,12 @@ def index():
 def play():
     if "code" in session:
         code = session['code']
-        if code.isalpha() and len(code) == 4 and models.Game.query.filter_by(code=code).first():
-            return render_template('game.html', code=code)
+        game_entry = models.Game.query.filter_by(code=code).first()
+        if code.isalpha() and len(code) == 4 and game_entry:
+            setup = pickle.loads(game_entry.setup)
+            print(setup['expand'])
+            print(type(setup['expand']))
+            return render_template('game.html', code=code, num_players=setup['num_players'], expand=setup['expand'])
         return render_template('game.html', code='')
     return redirect('/')
 
@@ -36,12 +40,17 @@ def create():
             if not models.Game.query.filter_by(code=code).first():
                 break
         session['code'] = code
-        db_game = models.Game(code=code, setup=pickle.dumps(json.loads(request.form['roles'])))
+        setup = {
+            'roles': json.loads(request.form['roles']),
+            'num_players': request.form['numplayers'],
+            'expand': request.form['expand'],
+        }
+        db_game = models.Game(code=code, setup=pickle.dumps(setup))
         db.session.add(db_game)
         db.session.commit()
         return redirect('/play')
 
-    return render_template('create.html')
+    return render_template('create.html', cards=json.dumps(cards.allCards))
 
 
 @app.route('/test/<toggle>/')

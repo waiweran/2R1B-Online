@@ -5,7 +5,7 @@
 <head>
 	<title>2 Rooms and a Boom</title>
 </head>
-<body onload='collectPlayers("{{ code }}")'>
+<body onload='collectPlayers("{{ code }}", {{ num_players }}, {{ expand }})'>
 	<div id="joinbox">
 		<h1>Game: {{ code }}</h1>
 		<div id="namebox">
@@ -17,7 +17,7 @@
 			<button id="ready">Ready</button>
 		</div>
 		<div id="readybox">
-			<h2 id="players">Players</h2>
+			<h2 id="players">Players (0 of {{ num_players }}{% if expand == 'true' %}+{% endif %})</h2>
 		</div>
 	</div>
 	<div id="gamebox">

@@ -43,7 +43,7 @@ def handle_player_update(json):
 def handle_game_start(json):
     code = json['code']
     game_entry: models.Game = models.Game.query.filter_by(code=code).first()
-    role_choices = pickle.loads(game_entry.setup)
+    role_choices = pickle.loads(game_entry.setup)['roles']
     game_entry.object = pickle.dumps(Game(json['players'], role_choices))
     game_entry.code = None
     db.session.commit()
@@ -79,7 +79,7 @@ def handle_game_enter(json):
 
 
 @socketio.on('game reenter')
-def handle_player_update(json):
+def handle_game_reenter(json):
     game_entry: models.Game = models.Game.query.get(json['id'])
     if game_entry is not None:
         game_obj: Game = pickle.loads(game_entry.object)
@@ -90,7 +90,7 @@ def handle_player_update(json):
         join_room('room_{}'.format(json['id']))
         players = list()
         for player in game_obj.players:
-            share_status = 'none'
+            share_status = None
             if player.card_share == sender.num:
                 share_status = 'card'
             elif player.color_share == sender.num:
@@ -105,6 +105,12 @@ def handle_player_update(json):
                 'share': share_status,
                 'votes': player.votes,
             })
+        if game_obj.round >= len(game_obj.rounds):
+            round_time = game_obj.rounds[-1]['time']
+            round_hostages = game_obj.rounds[-1]['hostages']
+        else:
+            round_time = game_obj.rounds[game_obj.round]['time']
+            round_hostages = game_obj.rounds[game_obj.round]['hostages']
         socketio.emit('game rejoin', {
             'id': game_entry.id,
             'numPlayers': game_obj.num_players,
@@ -112,11 +118,13 @@ def handle_player_update(json):
             'myConditions': list(sender.conditions),
             'players': players,
             'round': len(game_obj.rounds) - game_obj.round,
-            'time': game_obj.rounds[game_obj.round]['time'],
-            'numHostages': game_obj.rounds[game_obj.round]['hostages'],
-            'leaders': game_obj.leaders,
+            'time': round_time,
+            'numHostages': round_hostages,
+            'startTime': game_obj.start_time,
+            'sentHostages': list(game_obj.rooms_sending_hostages),
+            'leader': game_obj.leaders[sender.room],
             'myShare': {'card': sender.card_share, 'color': sender.color_share},
-            'myVotes': sender.my_votes,
+            'myVotes': list(sender.my_votes),
             'myShareCount': len(sender.shares),
         }, room=sender.sid)
 
@@ -386,9 +394,6 @@ def process_event(json, game_entry, game_obj, sender):
                 'myVotes': my_votes,
             }))
 
-    elif json['action'] == 'hostageupdate':
-        socketio.emit('event response', json, room='room_{}_{}'.format(json['id'], sender.room))
-
     elif json['action'] == 'sendhostages':
         if game_obj.leaders[sender.room] is None:
             game_obj.leaders[sender.room] = sender.num
@@ -399,9 +404,9 @@ def process_event(json, game_entry, game_obj, sender):
                         game_obj.players[i].room = 0
                     else:
                         game_obj.players[i].room = 1
-            game_obj.rooms_sending_hostages += 1
-            if game_obj.rooms_sending_hostages >= 2:
-                game_obj.rooms_sending_hostages = 0
+            game_obj.rooms_sending_hostages.add(sender.room)
+            if len(game_obj.rooms_sending_hostages) >= 2:
+                game_obj.rooms_sending_hostages.clear()
                 game_obj.end_round()
                 game_obj.setup_round()
 

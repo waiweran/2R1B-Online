@@ -13,7 +13,7 @@ class Game:
     leaders: List[Optional[int]]
     round: int
     start_time: Optional[int]
-    rooms_sending_hostages: int
+    rooms_sending_hostages: Set[int]
 
     actions: List['Action']
 
@@ -25,7 +25,7 @@ class Game:
         self.leaders = [None, None]
         self.round = 0
         self.start_time = None
-        self.rooms_sending_hostages = 0
+        self.rooms_sending_hostages = set()
         self.actions = list()
 
         for i in range(len(player_names)):
