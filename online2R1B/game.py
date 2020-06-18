@@ -13,9 +13,10 @@ class Game:
     leaders: List[Optional[int]]
     round: int
     start_time: Optional[int]
-    rooms_sending_hostages: Set[int]
+    rooms_sending_hostages: List[dict]
 
     actions: List['Action']
+    current_action: Optional['Action']
 
     def __init__(self, player_names, choices):
         self.players = []
@@ -25,8 +26,9 @@ class Game:
         self.leaders = [None, None]
         self.round = 0
         self.start_time = None
-        self.rooms_sending_hostages = set()
+        self.rooms_sending_hostages = list()
         self.actions = list()
+        self.current_action = None
 
         for i in range(len(player_names)):
             player = Player(player_names[i], i, self.roles[i], rooms[i])
@@ -48,7 +50,7 @@ class Game:
     def setup_round(self):
         if self.round >= len(self.rounds):
             for player in self.players:
-                if player.role.id == 'private eye':
+                if player.role.id == 'privateeye':
                     options = ['not', 'working']
                     self.actions.append(Action('all', {
                         'action': 'pause',
@@ -187,7 +189,7 @@ class Game:
         self.actions.append(Action('all', {
             'action': 'endgame',
             'info': info,
-        }))
+        }, blocking=True))
 
     def calc_winners(self):
         nt_index = -1
@@ -208,11 +210,13 @@ class Game:
                     bomber = player
 
         if 'ill' in president.conditions:
-            if self.settings['bury'].id != 'doctor' or 'nursed' not in president.conditions:
+            if not self.settings['bury'] or \
+                    self.settings['bury'].id != 'doctor' or 'nursed' not in president.conditions:
                 president.conditions.discard('ill')
                 president.conditions.add('dead')
         if 'broken' in bomber.conditions:
-            if self.settings['bury'].id != 'engineer' or 'tinkered' not in bomber.conditions:
+            if not self.settings['bury'] or \
+                    self.settings['bury'].id != 'engineer' or 'tinkered' not in bomber.conditions:
                 bomber.conditions.discard('broken')
                 bomber.conditions.add('fizzled')
         else:

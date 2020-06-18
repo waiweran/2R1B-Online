@@ -475,6 +475,9 @@ function initialize(game, myPlayerNum, rejoin) {
         if(game.startTime != null) {
             startRound(game.startTime);            
         }
+        if(game.currentAction != null) {
+            updateFromEvent(game.currentAction);
+        }
     }
 
     function makePlayer(i) {
@@ -686,7 +689,7 @@ function initialize(game, myPlayerNum, rejoin) {
         document.getElementById('fade').style.display = "none";
 
         // Start the round timer
-        var roundEndTime = startTime + 6000*round.time;
+        var roundEndTime = startTime + 60000*round.time;
         var roundTimer = setInterval(function runTimer() {
             var timeLeft = roundEndTime - Date.now();
             timer.innerHTML = "Round " + round.num + "<br>" + Math.floor(timeLeft/60000)
@@ -910,6 +913,7 @@ function initialize(game, myPlayerNum, rejoin) {
     function displayDecision(name, descrip, tag, options, chooser) {
         document.getElementById('decision').style.display = "";
         document.getElementById('hostages').style.display = "none";
+        document.getElementById('bothrooms').style.display = "none";
         var decisionPane = document.getElementById('decisionoptions');
         decisionPane.innerHTML = "";
         if(chooser == myPlayerNum) {

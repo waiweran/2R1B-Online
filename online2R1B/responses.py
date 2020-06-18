@@ -13,7 +13,7 @@ def handle_force_start(json):
     game_entry: models.Game = models.Game.query.filter_by(code=code).first()
     if game_entry.object is None:
         players = ['Ike', 'Marth', 'Ness', 'Lucas', 'Samus', 'Link', 'Zelda', 'Shulk', 'Peach', 'Daisy']
-        role_choices = pickle.loads(game_entry.setup)
+        role_choices = pickle.loads(game_entry.setup)['roles']
         game_obj = Game(players, role_choices)
         game_obj.next_player = 0
     else:
@@ -111,6 +111,13 @@ def handle_game_reenter(json):
         else:
             round_time = game_obj.rounds[game_obj.round]['time']
             round_hostages = game_obj.rounds[game_obj.round]['hostages']
+        current_action = None
+        if game_obj.current_action is not None:
+            if game_obj.current_action.recipient in ('all', sender.sid):
+                current_action = game_obj.current_action.action
+        rooms_sending_hostages = list()
+        for hostage_info in game_obj.rooms_sending_hostages:
+            rooms_sending_hostages.append(hostage_info['room'])
         socketio.emit('game rejoin', {
             'id': game_entry.id,
             'numPlayers': game_obj.num_players,
@@ -121,11 +128,12 @@ def handle_game_reenter(json):
             'time': round_time,
             'numHostages': round_hostages,
             'startTime': game_obj.start_time,
-            'sentHostages': list(game_obj.rooms_sending_hostages),
+            'sentHostages': rooms_sending_hostages,
             'leader': game_obj.leaders[sender.room],
             'myShare': {'card': sender.card_share, 'color': sender.color_share},
             'myVotes': list(sender.my_votes),
             'myShareCount': len(sender.shares),
+            'currentAction': current_action,
         }, room=sender.sid)
 
 
@@ -143,6 +151,7 @@ def handle_game_event(json):
     if json['action'] != 'continue':
         process_event(json, game_entry, game_obj, sender)
 
+    game_obj.current_action = None
     if game_obj.actions:
         index = 0
         player_updates = list()
@@ -170,6 +179,7 @@ def handle_game_event(json):
             else:
                 player_updates[action.recipient].append(action.action)
             if game_obj.actions[index].blocking:
+                game_obj.current_action = game_obj.actions[index]
                 index += 1
                 break
             index += 1
@@ -398,14 +408,15 @@ def process_event(json, game_entry, game_obj, sender):
         if game_obj.leaders[sender.room] is None:
             game_obj.leaders[sender.room] = sender.num
         if game_obj.leaders[sender.room] == sender.num:
-            for i in range(game_obj.num_players):
-                if json['hostages'][i]:
-                    if game_obj.players[i].room == 1:
-                        game_obj.players[i].room = 0
-                    else:
-                        game_obj.players[i].room = 1
-            game_obj.rooms_sending_hostages.add(sender.room)
+            game_obj.rooms_sending_hostages.append({'room': sender.room, 'hostages': json['hostages']})
             if len(game_obj.rooms_sending_hostages) >= 2:
+                for hostage_info in game_obj.rooms_sending_hostages:
+                    for i in range(game_obj.num_players):
+                        if hostage_info['hostages'][i]:
+                            if game_obj.players[i].room == 1:
+                                game_obj.players[i].room = 0
+                            else:
+                                game_obj.players[i].room = 1
                 game_obj.rooms_sending_hostages.clear()
                 game_obj.end_round()
                 game_obj.setup_round()
