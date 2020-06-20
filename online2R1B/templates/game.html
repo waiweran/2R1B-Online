@@ -5,19 +5,25 @@
 <head>
 	<title>2 Rooms and a Boom</title>
 </head>
-<body onload='collectPlayers("{{ code }}", {{ num_players }}, {{ expand }})'>
+<body 
+	{% if rejoin %}
+		onload='rejoinGame()'
+	{% else %}
+		onload='collectPlayers("{{ code }}", parseInt("{{ game_info.min_players }}"), "{{ game_info.expandable }}" == "True")'
+	{% endif %}
+	>
 	<div id="joinbox">
 		<h1>Game: {{ code }}</h1>
 		<div id="namebox">
 			<h2>Name</h2>
 			<br>
 			<input id="name" type="text" maxlength="12">
-			<button id="submit" disabled="disabled">Go</button>
+			<button id="submit">Go</button>
 			<br>
 			<button id="ready">Ready</button>
 		</div>
 		<div id="readybox">
-			<h2 id="players">Players (0 of {{ num_players }}{% if expand == 'true' %}+{% endif %})</h2>
+			<h2 id="players">Players (0 of {{ num_players }}{% if expand %}+{% endif %})</h2>
 		</div>
 	</div>
 	<div id="gamebox">
@@ -57,6 +63,7 @@
 		</div>
 		<div class="overlay" id="victory">
 			<h1 id="victorytitle"></h1>
+			<a href="/">Exit</a>
 			<div id="victoryroom1"></div>
 			<div id="victoryroom2"></div>
 		</div>
@@ -96,7 +103,7 @@
 		font-size: 20px;
 		text-align: center;
 	}
-	button {
+	button, a {
 		height: 37px;
 		padding: 2px 10px 0 10px;
 		background-color: #f0f0f0;
@@ -106,6 +113,7 @@
 		font-size: 20px;
 		text-align: center;
 		text-transform: uppercase;
+		text-decoration: none;
 	}
 	#submit {
 		margin-left: 5px;
@@ -113,7 +121,7 @@
 	#ready {
 		margin-top: 15px;
 	}
-	button:hover, #name:hover, #name:focus {
+	button:hover, a:hover, #name:hover, #name:focus {
 		background-color: #e0e0e0;
 		outline: none;
 	}

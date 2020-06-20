@@ -140,239 +140,157 @@ function createGame() {
 
 function collectPlayers(code, playerTarget, expandable) {
     document.getElementById("gamebox").style.display = "none";
+    console.log('entering normally')
 
     // Initiate force start for testing
     if(getCookie("go") != null) {
         socket.emit('force start', {"code": code});
     }
 
-    // Allow players with valid game cookies to rejoin
-    var gameId = getCookie('id');
-    var plNum = parseInt(getCookie('num'));
-    if(gameId != null && plNum != null) {
-        var gotIn = false;
-        socket.emit('game reenter', {'id': gameId, 'sender': plNum})
-        socket.on('game rejoin', function(msg) {
-            if(!gotIn) {
-                gotIn = true;
-                document.getElementById('joinbox').style.display = "none";
-                document.getElementById('gamebox').style.display = "";
-                initialize(msg, plNum, true);
-            }
-        });
-        var currentMemberCheck = setInterval(function runCheck() {
-            clearInterval(currentMemberCheck);
-            if(!gotIn) {
-                window.location.replace("/");
-            }
-        }, 2000);
-        return;
-    }
+    // Join on server
+    socket.emit('player appear', {"code": code})
+    var gameId = null;
+    var playerId = null;
+    var playerNum = null;
 
     // Setup player joining view
-    var players = null;
-    var readies = 0;
-    var playerNum = null;
-    const myKey = Math.floor(Math.random() * 1000000000);
     var isReady = false;
     var nameBox = document.getElementById("name");
     var submitBtn = document.getElementById("submit");
     var readyBtn = document.getElementById("ready");
     readyBtn.style.display = "none";
-    submitBtn.onclick = function join(e) {
-        socket.emit('player update', {"code": code, "action": "join", "name": nameBox.value, "key": myKey});
-        nameBox.readOnly = true;
-        submitBtn.disabled = true;
+    submitBtn.onclick = function(e) {
+        socket.emit('player update', {"code": code, "id": gameId, "action": "join", "name": nameBox.value});
+        submitBtn.innerHTML = 'Change';
+        submitBtn.onclick = function(e) {
+            socket.emit('player update', {"code": code, "id": gameId, "sender": playerId, "action": "rename", "name": nameBox.value});
+        }
     }
     readyBtn.onclick = function ready(e) {
         if(isReady) {
             isReady = false;
             readyBtn.innerHTML = "Ready";
-            socket.emit('player update', {"sender": playerNum, "code": code, "action": "ready", "status": -1})
+            socket.emit('player update', {"code": code, "id": gameId, "sender": playerId, "action": "ready", "status": -1})
         }
         else {
             isReady = true;
             readyBtn.innerHTML = "Not Ready";
-            socket.emit('player update', {"sender": playerNum, "code": code, "action": "ready", "status": 1});
+            socket.emit('player update', {"code": code, "id": gameId, "sender": playerId, "action": "ready", "status": 1});
         }
     }
 
-    // Find other players in the game
-    socket.emit('player appear', {"code": code, "action": "list request"})
-    var otherCheck = setInterval(function runCheck() {
-        submitBtn.disabled = false;
-        clearInterval(otherCheck);
-        if(players == null) {
-            players = [];
+    function updatePlayers(players) {
+        var readyBox = document.getElementById('readybox');
+        readyBox.innerHTML = "";
+        var readyTitle = document.createElement('H2');
+        readyBox.appendChild(readyTitle);
+        if(expandable) {
+            readyTitle.innerHTML = "Players (" + players.length + " of " + playerTarget + "+)";
         }
-    }, 2000);
-
-    var missedBeats = []
-    var heartbeat = setInterval(function runHeartbeat() {
-        if(playerNum != null) {
-            socket.emit('player update', {"sender": playerNum, "code": code, "action": "heartbeat"});
+        else {
+            readyTitle.innerHTML = "Players (" + players.length + " of " + playerTarget + ")";
         }
-        if(players != null) {
-            for(var i = 0; i < players.length; i++) {
-                if(missedBeats[i] == undefined) {
-                    missedBeats[i] = 1;
-                }
-                else if(missedBeats[i] > 3) {
-                    if(i == playerNum) {
-                        clearInterval(heartbeat);
-                        window.location.replace("/");
-                        return;
-                    }
-                    // Remove player
-                    if(players[i].ready) {
-                        readies--;
-                    }
-                    document.getElementById("p" + i + "rdy").remove();
-                    document.getElementById("p" + i + "rdybreak").remove();
-                    players.splice(i, 1);
-                    missedBeats.splice(i, 1);
-                    if(playerNum > i) {
-                        playerNum--;
-                    }
-                    for(var j = i; j < players.length; j++) {
-                        players[j].num--;
-                        document.getElementById("p" + (j+1) + "rdy").id = "p" + j + "rdy";
-                        document.getElementById("p" + (j+1) + "rdybreak").id = "p" + j + "rdybreak";
-                    }
-                    if(expandable) {
-                        document.getElementById("players").innerHTML = "Players (" + players.length + " of " + playerTarget + "+)";
-                    }
-                    else {
-                        document.getElementById("players").innerHTML = "Players (" + players.length + " of " + playerTarget + ")";
-                    }
-                    i--;
-                }
-                else {
-                    missedBeats[i]++;
-                }
-            }
-        }
-    }, 1000);
-
-    // Communication for joining the game
-    socket.on('player update', function(msg) {
-        if(msg.action == "heartbeat") {
-            missedBeats[msg.sender] = 0;
-        }
-        else if(msg.action == "join") {
-            if(msg.key == myKey) {
-                playerNum = players.length;
-                readyBtn.style.display = "";
-            }
-            var addedNum = players.length;
-            players.push({"name": msg.name, "num": addedNum, "ready": false});
+        for(var player of players) {
             var rdyLbl = document.createElement('LABEL');
-            rdyLbl.id = "p" + addedNum + "rdy";
-            rdyLbl.innerHTML = msg.name + " (waiting)";
-            rdyLbl.style.margin = "auto";
-            rdyLbl.style.color = "red";
-            var readyBox = document.getElementById('readybox');
-            readyBox.appendChild(rdyLbl);
-            var rdybreak = document.createElement('BR');
-            rdybreak.id = "p" + addedNum + "rdybreak"
-            readyBox.appendChild(rdybreak);
-            if(expandable) {
-                document.getElementById("players").innerHTML = "Players (" + players.length + " of " + playerTarget + "+)";
-            }
-            else {
-                document.getElementById("players").innerHTML = "Players (" + players.length + " of " + playerTarget + ")";
-            }
-        }
-        else if(msg.action == "list request") {
-            if(players != null) {
-                socket.emit('player update', {"code": code, "action": "list", "players": players});
-            }
-        }
-        else if(msg.action == "list") {
-            if(players == null) {
-                players = msg.players;
-                for(var player of players) {
-                    var rdyLbl = document.createElement('LABEL');
-                    rdyLbl.id = "p" + player.num + "rdy";
-                    if(player.ready) {
-                        rdyLbl.innerHTML = player.name + " (ready)";
-                        rdyLbl.style.color = "green";
-                    }
-                    else {
-                        rdyLbl.innerHTML = player.name + " (waiting)";
-                        rdyLbl.style.color = "red";
-                    }
-                    rdyLbl.style.margin = "auto";
-                    var readyBox = document.getElementById('readybox');
-                    readyBox.appendChild(rdyLbl);
-                    var rdybreak = document.createElement('BR');
-                    rdybreak.id = "p" + player.num + "rdybreak"
-                    readyBox.appendChild(rdybreak);
-                }
-                if(expandable) {
-                    document.getElementById("players").innerHTML = "Players (" + players.length + " of " + playerTarget + "+)";
-                }
-                else {
-                    document.getElementById("players").innerHTML = "Players (" + players.length + " of " + playerTarget + ")";
-                }
-                submitBtn.disabled = false;
-            }
-        }
-        else if(msg.action == "ready") {
-            var rdyLbl = document.getElementById("p" + msg.sender + "rdy");
-            if(msg.status > 0) {
-                rdyLbl.innerHTML = players[msg.sender].name + " (ready)  ";
-                players[msg.sender].ready = true;
+            if(player.ready) {
+                rdyLbl.innerHTML = player.name + " (ready)";
                 rdyLbl.style.color = "green";
             }
             else {
-                rdyLbl.innerHTML = players[msg.sender].name + " (waiting)";
-                players[msg.sender].ready = false;
+                rdyLbl.innerHTML = player.name + " (waiting)";
                 rdyLbl.style.color = "red";
             }
-            readies += msg.status;
-            if((readies == playerTarget || readies >= playerTarget && expandable) 
-                && readies == players.length && playerNum == 0) {
-                var playerNames = [];
-                for(var player of players) {
-                    playerNames.push(player.name);
+            rdyLbl.style.margin = "auto";
+            readyBox.appendChild(rdyLbl);
+            var rdybreak = document.createElement('BR');
+            readyBox.appendChild(rdybreak);
+        }
+    }
+
+    // Communication for joining the game
+    socket.on('game info', function(msg) {
+        gameId = msg.game_id;
+        updatePlayers(msg.players);
+    });
+
+    socket.on('player update', function(msg) {
+        if(msg.action == 'join') {
+            playerId = msg.player_id;    
+            readyBtn.style.display = "";        
+        }
+        else if(msg.action == 'updatelist') {
+            updatePlayers(msg.players);
+            for(var i = 0; i < msg.players.length; i++) {
+                var player = msg.players[i];
+                if(player.id == playerId) {
+                    playerNum = i;
+                    if(player.ready) {
+                        isReady = true;
+                        readyBtn.innerHTML = "Not Ready";
+                    }
+                    else {
+                        isReady = false;
+                        readyBtn.innerHTML = "Ready";
+                    }
+                    break;
                 }
-                socket.emit('game start', {"code": code, "players": playerNames});
+            }
+            if(msg.start) {
+                if(playerNum != null) {
+                    document.getElementById('joinbox').style.display = "none";
+                    socket.emit('game enter', {'id': gameId, 'sender': playerNum, 'code': code});
+                }
+                else {
+                    window.location.replace("/");
+                }            
             }
         }
     });
-    socket.on('game start', function(msg) {
-        if(playerNum != null) {
-            clearInterval(heartbeat);
-            document.getElementById('joinbox').style.display = "none";
-            document.getElementById('gamebox').style.display = "";
-            socket.emit('game enter', {'sender': playerNum, 'id': msg.id, 'code': code});
-        }
-        else {
-            window.location.replace("/");
-        }
-    });
+
     socket.on('game enter', function(gameMsg) {
+        document.getElementById('gamebox').style.display = "";
         initialize(gameMsg, playerNum, false);
     });
 
     socket.on('force start', function(msg) {
-        console.log('force start: ' + msg.num + " " + msg.more);
         if(playerNum == null) {
             playerNum = msg.num;
+            gameId = msg.id;
             if(msg.more) {
                 window.open('/play/');
             }
+        }
+        if(!msg.more) {
+            document.getElementById('joinbox').style.display = "none";
+            socket.emit('game enter', {'id': gameId, 'sender': playerNum, 'code': code});
         }
     });
 }
 
 
-function initialize(game, myPlayerNum, rejoin) {
+function rejoinGame() {
+    document.getElementById('joinbox').style.display = "none";
+    document.getElementById('gamebox').style.display = "none";
+    var gameId = getCookie('id');
+    var playerNum = parseInt(getCookie('num'));
+    socket.on('game rejoin', function(gameMsg) {
+        console.log('Received rejoin info')
+        document.getElementById('gamebox').style.display = "";
+        initialize(gameMsg, playerNum, true);
+    });
+    if(gameId != null && playerNum != null) {
+        console.log('Rejoining Game');
+        socket.emit('game reenter', {"id": gameId, "sender": playerNum})
+    }
+    else {
+        window.location.replace("/");
+    }
+}
 
-    // Write game ID and player number to cookies
-    setCookie("id", game.id, 1);
-    setCookie("num", myPlayerNum, 1);
+
+function initialize(game, myPlayerNum, rejoin) {
+    setCookie('id', game.id, 1);
+    setCookie('num', myPlayerNum, 1);
 
     // Hide overlays
     document.getElementById('bothrooms').style.display = "none";
@@ -446,7 +364,6 @@ function initialize(game, myPlayerNum, rejoin) {
 
     // Setup current game state if rejoining
     if(rejoin) {
-        console.log(game);
         for(var i = 0; i < game.numPlayers; i++) {
             var player = players[i];
             player.role = game.players[i].role;
@@ -518,14 +435,14 @@ function initialize(game, myPlayerNum, rejoin) {
         player.colorShareBtn = document.createElement('BUTTON');
         player.colorShareBtn.innerHTML = "Color Share";
         player.colorShareBtn.onclick = function(e) {
-            gameUpdate({"action": "colorshare", "target": i});
+            gameUpdate({"action": "share", "type": "color", "target": i});
         };
         player.element.appendChild(player.colorShareBtn);
 
         player.cardShareBtn = document.createElement('BUTTON');
         player.cardShareBtn.innerHTML = "Card Share";
         player.cardShareBtn.onclick = function(e) {
-             gameUpdate({"action": "cardshare", "target": i});
+             gameUpdate({"action": "share", "type": "card", "target": i});
         };
         player.element.appendChild(player.cardShareBtn);
         player.element.appendChild(document.createElement('BR'));
@@ -669,7 +586,12 @@ function initialize(game, myPlayerNum, rejoin) {
         }
 
         // Setup starting
-        document.getElementById('startround').onclick = function() {
+        var startRoundBtn = document.getElementById('startround');
+        startRoundBtn.disabled = true;
+        setTimeout(function() {
+            startRoundBtn.disabled = false;
+        }, 15000)
+        startRoundBtn.onclick = function() {
             gameUpdate({"action": "startround", "startTime": Date.now()});
         };
 
@@ -996,7 +918,6 @@ function initialize(game, myPlayerNum, rejoin) {
     }
 
     socket.on('quick event', function(msg) {
-        console.log(msg);
         if(msg.action == 'hostageupdate') {
             if(leader != myPlayerNum) {
                 if(msg.completed) {
@@ -1018,12 +939,10 @@ function initialize(game, myPlayerNum, rejoin) {
     });
     socket.on('event list', function(msg) {
         for(var event of msg) {
-            console.log(event);
             updateFromEvent(event);
         }
     });
     socket.on('event response', function(msg) {
-        console.log(msg);
         updateFromEvent(msg);
     });
 
@@ -1031,36 +950,27 @@ function initialize(game, myPlayerNum, rejoin) {
         if(msg.action == 'startround') {
             startRound(msg.startTime);
         }
-        else if(msg.action == 'share') {
-            if(msg.type == 'color') {
-                players[msg.sender].colorShareBtn.style.backgroundColor = "lightgreen";
+        else if(msg.action == 'shareupdate') {
+            for(var player of players) {
+                if(msg.colorout == player.num) {
+                    player.colorShareBtn.style.backgroundColor = "skyblue";
+                }
+                else {
+                    player.colorShareBtn.style.backgroundColor = null;                    
+                }
+                if(msg.cardout == player.num) {
+                    player.cardShareBtn.style.backgroundColor = "skyblue";
+                }
+                else {
+                    player.cardShareBtn.style.backgroundColor = null;                    
+                }
             }
-            else {
-                players[msg.sender].cardShareBtn.style.backgroundColor = "lightgreen";
-            }
-        }
-        else if(msg.action == 'unshare') {
-            if(msg.type == 'color') {
-                players[msg.sender].colorShareBtn.style.backgroundColor = null;
-            }
-            else {
-                players[msg.sender].cardShareBtn.style.backgroundColor = null;
-            }
-        }
-        else if(msg.action == 'share_select') {
-            if(msg.type == 'color') {
-                players[msg.target].colorShareBtn.style.backgroundColor = "skyblue";
-            }
-            else {
-                players[msg.target].cardShareBtn.style.backgroundColor = "skyblue";
-            }
-        }
-        else if(msg.action == 'share_deselect') {
-            if(msg.type == 'color') {
-                players[msg.target].colorShareBtn.style.backgroundColor = null;
-            }
-            else {
-                players[msg.target].cardShareBtn.style.backgroundColor = null;
+            for(var share of msg.incoming) {
+                if(share.type == 'color')
+                    players[share.sender].colorShareBtn.style.backgroundColor = "lightgreen";
+                else {
+                    players[share.sender].cardShareBtn.style.backgroundColor = "lightgreen";                    
+                }
             }
         }
         else if(msg.action == 'privatereveal') {
@@ -1075,13 +985,9 @@ function initialize(game, myPlayerNum, rejoin) {
             updateRoles();
         }
         else if(msg.action == 'colorshare') {
-            players[msg.target].colorShareBtn.style.backgroundColor = null;
-            myPlayer.colorShareBtn.style.backgroundColor = null;
             teamShow(players[msg.target], msg.team, 'Color Share');
         }
         else if(msg.action == 'cardshare') {
-            players[msg.target].cardShareBtn.style.backgroundColor = null;
-            myPlayer.cardShareBtn.style.backgroundColor = null;
             cardShow(players[msg.target], msg.role, 'Card Share');
         }
         else if(msg.action == 'leaderupdate') {
@@ -1106,6 +1012,8 @@ function initialize(game, myPlayerNum, rejoin) {
                 if(msg.roles[i] != null) {
                     players[i].role = msg.roles[i];
                 }
+                players[i].votes = 0;
+                players[i].myVote = false;
             }
             round.num = msg.round;
             round.time = msg.time;

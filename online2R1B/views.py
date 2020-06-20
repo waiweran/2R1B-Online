@@ -21,14 +21,10 @@ def index():
 def play():
     if "code" in session:
         code = session['code']
-        game_entry = models.Game.query.filter_by(code=code).first()
+        game_entry: models.Game = models.Game.query.filter_by(code=code).first()
         if code.isalpha() and len(code) == 4 and game_entry:
-            setup = pickle.loads(game_entry.setup)
-            print(setup['expand'])
-            print(type(setup['expand']))
-            return render_template('game.html', code=code, num_players=setup['num_players'], expand=setup['expand'])
-        return render_template('game.html', code='')
-    return redirect('/')
+            return render_template('game.html', code=code, game_info=game_entry)
+    return render_template('game.html', rejoin=True)
 
 
 @app.route('/create/', methods=['GET', 'POST'])
@@ -40,12 +36,10 @@ def create():
             if not models.Game.query.filter_by(code=code).first():
                 break
         session['code'] = code
-        setup = {
-            'roles': json.loads(request.form['roles']),
-            'num_players': request.form['numplayers'],
-            'expand': request.form['expand'],
-        }
-        db_game = models.Game(code=code, setup=pickle.dumps(setup))
+        setup = json.loads(request.form['roles'])
+        num_players = request.form['numplayers']
+        expandable = request.form['expand'] == 'true'
+        db_game = models.Game(code=code, setup=pickle.dumps(setup), min_players=num_players, expandable=expandable)
         db.session.add(db_game)
         db.session.commit()
         return redirect('/play')

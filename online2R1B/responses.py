@@ -13,7 +13,7 @@ def handle_force_start(json):
     game_entry: models.Game = models.Game.query.filter_by(code=code).first()
     if game_entry.object is None:
         players = ['Ike', 'Marth', 'Ness', 'Lucas', 'Samus', 'Link', 'Zelda', 'Shulk', 'Peach', 'Daisy']
-        role_choices = pickle.loads(game_entry.setup)['roles']
+        role_choices = pickle.loads(game_entry.setup)
         game_obj = Game(players, role_choices)
         game_obj.next_player = 0
     else:
@@ -23,31 +23,92 @@ def handle_force_start(json):
     game_entry.object = pickle.dumps(game_obj)
     db.session.commit()
     more = game_obj.next_player < len(game_obj.players)
-    socketio.emit('force start', {'num': next_player, 'more': more}, room=code)
+    socketio.emit('force start', {'id': game_entry.id, 'num': next_player, 'more': more}, room=code)
     if not more:
-        socketio.emit('game start', {'id': game_entry.id}, room=code)
+        game_entry.code = None
+        for p_entry in game_entry.players:
+            db.session.delete(p_entry)
+        db.session.commit()
 
 
 @socketio.on('player appear')
 def handle_player_appear(json):
     join_room(json['code'])
-    socketio.emit('player update', json, room=json['code'])
+    game_entry: models.Game = models.Game.query.filter_by(code=json['code']).first()
+    player_info = list()
+    for player in game_entry.players:
+        player_info.append({'name': player.name, 'ready': player.ready})
+    socketio.emit('game info', {
+        'game_id': game_entry.id,
+        'players': player_info,
+    }, room=request.sid)
+
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    player_entry = models.Player.query.get(request.sid)
+    if player_entry and player_entry.game.code:
+        game_entry = player_entry.game
+        db.session.delete(player_entry)
+        db.session.commit()
+        player_info = list()
+        player_names = list()
+        all_ready = game_entry.min_players == len(game_entry.players) or \
+            (game_entry.min_players < len(game_entry.players) and game_entry.expandable)
+        for player in game_entry.players:
+            player_info.append({'id': player.sid, 'name': player.name, 'ready': player.ready})
+            player_names.append(player.name)
+            all_ready = all_ready and player.ready
+        socketio.emit('player update', {
+            'action': 'updatelist',
+            'players': player_info,
+            'start': all_ready
+        }, room=game_entry.code)
+        if all_ready:
+            role_choices = pickle.loads(game_entry.setup)
+            game_entry.object = pickle.dumps(Game(player_names, role_choices))
+            game_entry.code = None
+            for p_entry in game_entry.players:
+                db.session.delete(p_entry)
+            db.session.commit()
 
 
 @socketio.on('player update')
 def handle_player_update(json):
-    socketio.emit('player update', json, room=json['code'])
-
-
-@socketio.on('game start')
-def handle_game_start(json):
-    code = json['code']
-    game_entry: models.Game = models.Game.query.filter_by(code=code).first()
-    role_choices = pickle.loads(game_entry.setup)['roles']
-    game_entry.object = pickle.dumps(Game(json['players'], role_choices))
-    game_entry.code = None
-    db.session.commit()
-    socketio.emit('game start', {'id': game_entry.id}, room=code)
+    if json['action'] == 'join':
+        player_entry = models.Player(sid=request.sid, name=json['name'], game_id=json['id'])
+        db.session.add(player_entry)
+        db.session.commit()
+        socketio.emit('player update', {'action': 'join', 'player_id': request.sid}, room=request.sid)
+    elif json['action'] == 'ready':
+        player_entry = models.Player.query.get(json['sender'])
+        player_entry.ready = json['status'] == 1
+        db.session.commit()
+    elif json['action'] == 'rename':
+        player_entry = models.Player.query.get(json['sender'])
+        player_entry.name = json['name']
+        db.session.commit()
+    player_info = list()
+    player_names = list()
+    game_entry = models.Game.query.get(json['id'])
+    all_ready = game_entry.min_players == len(game_entry.players) or \
+        (game_entry.min_players < len(game_entry.players) and game_entry.expandable)
+    for player in game_entry.players:
+        player_info.append({'id': player.sid, 'name': player.name, 'ready': player.ready})
+        player_names.append(player.name)
+        all_ready = all_ready and player.ready
+    socketio.emit('player update', {
+        'action': 'updatelist',
+        'players': player_info,
+        'start': all_ready
+    }, room=json['code'])
+    if all_ready:
+        role_choices = pickle.loads(game_entry.setup)
+        game_entry.object = pickle.dumps(Game(player_names, role_choices))
+        game_entry.code = None
+        for p_entry in game_entry.players:
+            db.session.delete(p_entry)
+        db.session.commit()
 
 
 @socketio.on('game enter')
@@ -248,118 +309,76 @@ def process_event(json, game_entry, game_obj, sender):
                 'role': sender.role.source,
             }))
 
-    elif json['action'] == 'colorshare':
+    elif json['action'] == 'share':
         target: Player = game_obj.players[json['target']]
-        if sender.card_share:
-            socketio.emit('event response', {
-                'action': 'unshare',
-                'type': 'card',
-                'sender': sender.num,
-            }, room=game_obj.players[sender.card_share].sid)
-            socketio.emit('event response', {
-                'action': 'share_deselect',
-                'type': 'card',
-                'target': sender.card_share,
-            }, room=sender.sid)
-        if sender.color_share:
-            socketio.emit('event response', {
-                'action': 'unshare',
-                'type': 'color',
-                'sender': sender.num,
-            }, room=game_obj.players[sender.color_share].sid)
-            socketio.emit('event response', {
-                'action': 'share_deselect',
-                'type': 'color',
-                'target': sender.color_share,
-            }, room=sender.sid)
-        sender.card_share = None
-        if 'shy' in sender.conditions or 'savvy' in sender.conditions or \
-                'paranoid' in sender.conditions or sender.color_share == target.num:
-            sender.color_share = None
-        elif 'foolish' in target.conditions or target.color_share == sender.num:
-            sender.color_share = None
-            if target.color_share == sender.num:
-                target.color_share = None
-            game_obj.actions.append(Action(target.num, {
-                'action': 'colorshare',
-                'target': sender.num,
-                'team': sender.role.team_source,
-            }))
-            game_obj.actions.append(Action(sender.num, {
-                'action': 'colorshare',
-                'target': target.num,
-                'team': target.role.team_source,
-            }))
-            game_obj.mark_color_share(sender, target)
-        else:
-            sender.color_share = target.num
-            socketio.emit('event response', {
-                'action': 'share',
-                'type': 'color',
-                'sender': sender.num,
-            }, room=target.sid)
-            socketio.emit('event response', {
-                'action': 'share_select',
-                'type': 'color',
-                'target': target.num,
-            }, room=sender.sid)
-
-    elif json['action'] == 'cardshare':
-        target: Player = game_obj.players[json['target']]
-        if sender.card_share:
-            socketio.emit('event response', {
-                'action': 'unshare',
-                'type': 'card',
-                'sender': sender.num,
-            }, room=game_obj.players[sender.card_share].sid)
-            socketio.emit('event response', {
-                'action': 'share_deselect',
-                'type': 'card',
-                'target': sender.card_share,
-            }, room=sender.sid)
-        if sender.color_share:
-            socketio.emit('event response', {
-                'action': 'unshare',
-                'type': 'color',
-                'sender': sender.num,
-            }, room=game_obj.players[sender.color_share].sid)
-            socketio.emit('event response', {
-                'action': 'share_deselect',
-                'type': 'color',
-                'target': sender.color_share,
-            }, room=sender.sid)
-        sender.color_share = None
-        if 'shy' in sender.conditions or 'coy' in sender.conditions or \
-                ('paranoid' in sender.conditions and len(sender.shares) > 1) or \
-                sender.card_share == target.num:
+        if json['type'] == 'color':
             sender.card_share = None
-        elif 'foolish' in target.conditions or target.card_share == sender.num:
-            sender.card_share = None
-            if target.card_share == sender.num:
-                target.card_share = None
-            game_obj.actions.append(Action(target.num, {
-                'action': 'cardshare',
-                'target': sender.num,
-                'role': sender.role.source,
-            }))
-            game_obj.actions.append(Action(sender.num, {
-                'action': 'cardshare',
-                'target': target.num,
-                'role': target.role.source,
-            }))
-            game_obj.mark_card_share(sender, target)
-        else:
-            sender.card_share = target.num
-            socketio.emit('event response', {
-                'action': 'share',
-                'type': 'card',
-                'sender': sender.num,
-            }, room=target.sid)
-            socketio.emit('event response', {
-                'action': 'share_select',
-                'type': 'card',
-                'target': target.num,
-            }, room=sender.sid)
+            if 'shy' in sender.conditions or 'savvy' in sender.conditions or \
+                    'paranoid' in sender.conditions or sender.color_share == target.num:
+                sender.color_share = None
+            elif 'foolish' in target.conditions or target.color_share == sender.num:
+                sender.color_share = None
+                if target.color_share == sender.num:
+                    target.color_share = None
+                game_obj.actions.append(Action(target.num, {
+                    'action': 'colorshare',
+                    'target': sender.num,
+                    'team': sender.role.team_source,
+                }))
+                game_obj.actions.append(Action(sender.num, {
+                    'action': 'colorshare',
+                    'target': target.num,
+                    'team': target.role.team_source,
+                }))
+                game_obj.mark_color_share(sender, target)
+            else:
+                sender.color_share = target.num
+        elif json['type'] == 'card':
+            sender.color_share = None
+            if 'shy' in sender.conditions or 'coy' in sender.conditions or \
+                    ('paranoid' in sender.conditions and len(sender.shares) > 1) or \
+                    sender.card_share == target.num:
+                sender.card_share = None
+            elif 'foolish' in target.conditions or target.card_share == sender.num:
+                sender.card_share = None
+                if target.card_share == sender.num:
+                    target.card_share = None
+                game_obj.actions.append(Action(target.num, {
+                    'action': 'cardshare',
+                    'target': sender.num,
+                    'role': sender.role.source,
+                }))
+                game_obj.actions.append(Action(sender.num, {
+                    'action': 'cardshare',
+                    'target': target.num,
+                    'role': target.role.source,
+                }))
+                game_obj.mark_card_share(sender, target)
+            else:
+                sender.card_share = target.num
+        sender_incoming = list()
+        target_incoming = list()
+        for player in game_obj.players:
+            if player.card_share == sender.num:
+                sender_incoming.append({'type': 'card', 'sender': player.num})
+            if player.color_share == sender.num:
+                sender_incoming.append({'type': 'color', 'sender': player.num})
+            if player.card_share == target.num:
+                target_incoming.append({'type': 'card', 'sender': player.num})
+            if player.color_share == target.num:
+                target_incoming.append({'type': 'color', 'sender': player.num})
+        game_obj.actions.append(Action(sender.num, {
+            'action': 'shareupdate',
+            'incoming': sender_incoming,
+            'colorout': sender.color_share,
+            'cardout': sender.card_share,
+        }))
+        game_obj.actions.append(Action(target.num, {
+            'action': 'shareupdate',
+            'incoming': target_incoming,
+            'colorout': target.color_share,
+            'cardout': target.card_share,
+        }))
 
     elif json['action'] == 'nominate':
         target: Player = game_obj.players[json['target']]
@@ -382,7 +401,7 @@ def process_event(json, game_entry, game_obj, sender):
                 else:
                     sender.my_votes.add(target.num)
                     target.votes += 1
-                    if target.votes > game_obj.num_players/4:
+                    if target.votes > game_obj.num_players / 4:
                         game_obj.leaders[target.room] = target.num
                         target.votes = 0
                         for player in game_obj.players:

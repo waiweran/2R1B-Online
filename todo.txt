@@ -1,0 +1,21 @@
+High Priority
+
+Show roles in game on collect players page
+Show number of players on create page
+Make public and private reveal support color reveals too
+
+
+Medium Priority
+
+Disable color sharing in games with 10 or fewer players (maybe)
+Include more cards
+Disable 'Create Game' button when few roles are selected on create page
+Add links to rules, character guide
+Add tutorial
+
+
+Low Priority
+
+Add play again button
+Add messaging feature
+Make selected hostage info persist across reloads

@@ -15,18 +15,8 @@
 		<br>
 		<a id="create" href="/create/">Create Game</a>
 	</div>
+	<a id="rejoin" href="/play/">Rejoin Last Game</a>
 </body>
-<script>
-setCookie('id', '', -1);
-setCookie('num', '', -1);
-
-function setCookie(cname, cvalue, exdays) {
-    var d = new Date();
-    d.setTime(d.getTime() + (exdays*24*60*60*1000));
-    var expires = "expires="+ d.toUTCString();
-    document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
-}
-</script>
 <style>
 	body {
 		background-color: #e0e0e0;
@@ -87,6 +77,16 @@ function setCookie(cname, cvalue, exdays) {
 	#submit:hover, #code:hover, #create:hover, #submit:focus, #code:focus, #create:focus {
 		background-color: #d0d0d0;
 		outline: none;
+	}
+	#rejoin {
+		position: fixed;
+  		top: 93%;
+  		left: 50%;
+  		transform: translate(-50%, -50%);
+		padding: 5px;
+		color: #989898;
+		font-size: 18px;
+		text-transform: uppercase;
 	}
 	#mainbox {
 		position: fixed;

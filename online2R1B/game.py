@@ -461,9 +461,9 @@ class Player:
             self.conditions.discard('ill')
         elif player.role.id == 'engineer':
             self.conditions.discard('broken')
-        elif player.role.id == 'nurse':
+        elif player.role.id == 'nurse' and 'ill' in self.conditions:
             self.conditions.add('nursed')
-        elif player.role.id == 'tinkerer':
+        elif player.role.id == 'tinkerer' and 'broken' in self.conditions:
             self.conditions.add('tinkered')
         elif player.role.id in ('bluecriminal', 'redcriminal'):
             if 'foolish' in self.conditions:
@@ -621,7 +621,12 @@ def deal_roles(num_players: int, choices: List[int]) -> Tuple[List['Role'], List
         "/static/Teams/UnknownTeam.png",
     ]
     for role in roles:
-        role.team_source = team_sources[role.team]
+        if role.id == 'redspy':
+            role.team_source = team_sources[1]
+        elif role.id == 'bluespy':
+            role.team_source = team_sources[2]
+        else:
+            role.team_source = team_sources[role.team]
     random.shuffle(roles)
 
     if settings['drunk']:
