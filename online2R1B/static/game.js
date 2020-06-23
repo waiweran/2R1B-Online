@@ -2,50 +2,52 @@
 
 var socket = io();
 
+var allCards = [
+    {"name1": "Doctor", "name3": "Engineer", "class": "blueredteam", "num": 2, "id": 1},
+    {"name1": "Blue Spy", "name3": "Red Spy", "class": "blueredteam", "num": 2, "id": 2},
+    {"name1": "Coy Boy", "name3": "Coy Boy", "class": "blueredteam", "num": 2, "id": 3},
+    {"name1": "Shy Guy", "name3": "Shy Guy", "class": "blueredteam", "num": 2, "id": 7},
+    {"name1": "Thug", "name3": "Thug", "class": "blueredteam", "num": 2, "id": 8},
+    {"name1": "Criminal", "name3": "Criminal", "class": "blueredteam", "num": 2, "id": 9},
+    {"name1": "Dealer", "name3": "Dealer", "class": "blueredteam", "num": 2, "id": 10},
+    {"name1": "Angel", "name3": "Angel", "class": "blueredteam", "num": 2, "id": 5},
+    {"name1": "Demon", "name3": "Demon", "class": "blueredteam", "num": 2, "id": 6},
+    {"name1": "Negotiator", "name3": "Negotiator", "class": "blueredteam", "num": 2, "id": 25},
+    {"name1": "Paranoid", "name3": "Paranoid", "class": "blueredteam", "num": 2, "id": 26},
+    {"name1": "Medic", "name3": "Medic", "class": "blueredteam", "num": 2, "id": 27},
+    {"name1": "Psychologist", "name3": "Psychologist", "class": "blueredteam", "num": 2, "id": 28},
+    {"name2": 'Gambler', "class": "grayteam", "num": 1, "id": 13},
+    {"name2": 'MI6', "class": "grayteam", "num": 1, "id": 4},
+    {"name2": 'Nuclear Tyrant', "class": "grayteam", "num": 1, "id": 31},
+    {"name2": 'Hot Potato', "class": "grayteam", "num": 1, "id": 15},
+    {"name2": 'Leprechaun', "class": "greenteam", "num": 1, "id": 12},
+    {"name1": "Sniper", "name2": "Target", "name3": "Decoy", "class": "grayteam", "num": 3, "id": 16},
+    {"name1": "Ahab", "name3": "Moby", "class": "grayteam", "num": 2, "id": 17},
+    {"name1": "Butler", "name3": "Maid", "class": "grayteam", "num": 2, "id": 20},
+    {"name1": "Romeo", "name3": "Juliet", "class": "grayteam", "num": 2, "id": 23},
+    {"name1": "Wife", "name3": "Mistress", "class": "grayteam", "num": 2, "id": 24},
+    {"name2": 'Bomb-Bot', "class": "grayteam", "num": 1, "id": 18},
+    {"name2": 'Queen', "class": "grayteam", "num": 1, "id": 19},
+    {"name2": 'Intern', "class": "grayteam", "num": 1, "id": 21},
+    {"name2": 'Victim', "class": "grayteam", "num": 1, "id": 22},
+    {"name2": 'Rival', "class": "grayteam", "num": 1, "id": 29},
+    {"name2": 'Survivor', "class": "grayteam", "num": 1, "id": 30},
+    {"name1": "President's Daughter", "name3": "Martyr", "class": "blueredteam", "num": 2, "bury": true, "id": 32},
+    {"name1": "Nurse", "name3": "Tinkerer", "class": "blueredteam", "num": 2, "bury": true, "id": 33},
+    {"name2": "Private Eye", "class": "grayteam", "num": 1, "bury": true, "id": 34},
+    {"name2": 'Drunk', "class": "unknownteam", "num": 0, "id": 11},
+    {"name2": 'Zombie', "class": "greenteam", "num": 1, "id": 14},
+    {"name1": "Blue Team", "name3": "Red Team", "class": "blueredteam", "num": 2, "id": 0},
+];
+
 
 function createGame() {
 
     var gameCardsBox = document.getElementById('gamecards');
     var allCardsBox = document.getElementById('allcards');
-    var numGameCards = 0;
+    var numRoles = 2;
+    var buryRoles = 0;
     var expand = false;
-    var allCards = [
-        {"name1": "Doctor", "name3": "Engineer", "class": "blueredteam", "num": 2, "id": 1},
-        {"name1": "Blue Spy", "name3": "Red Spy", "class": "blueredteam", "num": 2, "id": 2},
-        {"name1": "Coy Boy", "name3": "Coy Boy", "class": "blueredteam", "num": 2, "id": 3},
-        {"name1": "Shy Guy", "name3": "Shy Guy", "class": "blueredteam", "num": 2, "id": 7},
-        {"name1": "Thug", "name3": "Thug", "class": "blueredteam", "num": 2, "id": 8},
-        {"name1": "Criminal", "name3": "Criminal", "class": "blueredteam", "num": 2, "id": 9},
-        {"name1": "Dealer", "name3": "Dealer", "class": "blueredteam", "num": 2, "id": 10},
-        {"name1": "Angel", "name3": "Angel", "class": "blueredteam", "num": 2, "id": 5},
-        {"name1": "Demon", "name3": "Demon", "class": "blueredteam", "num": 2, "id": 6},
-        {"name1": "Negotiator", "name3": "Negotiator", "class": "blueredteam", "num": 2, "id": 25},
-        {"name1": "Paranoid", "name3": "Paranoid", "class": "blueredteam", "num": 2, "id": 26},
-        {"name1": "Medic", "name3": "Medic", "class": "blueredteam", "num": 2, "id": 27},
-        {"name1": "Psychologist", "name3": "Psychologist", "class": "blueredteam", "num": 2, "id": 28},
-        {"name2": 'Gambler', "class": "grayteam", "num": 1, "id": 13},
-        {"name2": 'MI6', "class": "grayteam", "num": 1, "id": 4},
-        {"name2": 'Nuclear Tyrant', "class": "grayteam", "num": 1, "id": 31},
-        {"name2": 'Hot Potato', "class": "grayteam", "num": 1, "id": 15},
-        {"name2": 'Leprechaun', "class": "greenteam", "num": 1, "id": 12},
-        {"name1": "Sniper", "name2": "Target", "name3": "Decoy", "class": "grayteam", "num": 3, "id": 16},
-        {"name1": "Ahab", "name3": "Moby", "class": "grayteam", "num": 2, "id": 17},
-        {"name1": "Butler", "name3": "Maid", "class": "grayteam", "num": 2, "id": 20},
-        {"name1": "Romeo", "name3": "Juliet", "class": "grayteam", "num": 2, "id": 23},
-        {"name1": "Wife", "name3": "Mistress", "class": "grayteam", "num": 2, "id": 24},
-        {"name2": 'Bomb-Bot', "class": "grayteam", "num": 1, "id": 18},
-        {"name2": 'Queen', "class": "grayteam", "num": 1, "id": 19},
-        {"name2": 'Intern', "class": "grayteam", "num": 1, "id": 21},
-        {"name2": 'Victim', "class": "grayteam", "num": 1, "id": 22},
-        {"name2": 'Rival', "class": "grayteam", "num": 1, "id": 29},
-        {"name2": 'Survivor', "class": "grayteam", "num": 1, "id": 30},
-        {"name1": "President's Daughter", "name3": "Martyr", "class": "blueredteam", "num": 2, "bury": true, "id": 32},
-        {"name1": "Nurse", "name3": "Tinkerer", "class": "blueredteam", "num": 2, "bury": true, "id": 33},
-        {"name2": "Private Eye", "class": "grayteam", "num": 1, "bury": true, "id": 34},
-        {"name2": 'Drunk', "class": "unknownteam", "num": 0, "id": 11},
-        {"name2": 'Zombie', "class": "greenteam", "num": 1, "id": 14},
-        {"name1": "Blue Team", "name3": "Red Team", "class": "blueredteam", "num": 2, "id": 0},
-    ];
     for(var card of allCards) {
         var cardElement = document.createElement('SPAN');
         cardElement.className = card.class;
@@ -81,6 +83,27 @@ function createGame() {
 
     });
     dragger.on("drop", function (el, target, source, sibling) {
+        if(el.card != undefined) {
+            if(source.id == 'allcards' && target.id == 'gamecards') {
+                numRoles += el.card.num;
+                if(el.card.bury) {
+                    if(buryRoles == 0) {
+                        numRoles--;
+                    }
+                    buryRoles++;
+                }
+            }
+            else if(source.id == 'gamecards' && target.id == 'allcards') {
+                numRoles -= el.card.num;
+                if(el.card.bury) {
+                    buryRoles--;
+                    if(buryRoles == 0) {
+                        numRoles++;
+                    }
+                }
+            }
+        }
+        updateTitle()
         if(el.card != undefined && el.card.id == 0) {
             if(source.id == 'allcards' && target.id == 'gamecards') {
                 var cardElement = document.createElement('SPAN');
@@ -112,6 +135,7 @@ function createGame() {
             expandBtn.style.backgroundColor = "lightgreen";
             expand = true;
         }
+        updateTitle();
     }
 
     document.getElementById('createbtn').onclick = function(e) {
@@ -135,10 +159,25 @@ function createGame() {
             document.getElementById('gameform').submit()            
         }
     }
+
+    function updateTitle() {
+        if(expand) {
+            document.getElementById('gametitle').innerHTML = "Game (" + numRoles + "+ Players)"
+        }
+        else {
+            document.getElementById('gametitle').innerHTML = "Game (" + numRoles + " Players)"
+        }
+        if(numRoles >= 6) {
+            document.getElementById('createbtn').disabled = false;
+        }
+        else {
+            document.getElementById('createbtn').disabled = true;
+        }
+    }
 }
 
 
-function collectPlayers(code, playerTarget, expandable) {
+function collectPlayers(code, roleIDs, playerTarget, expandable) {
     document.getElementById("gamebox").style.display = "none";
     console.log('entering normally')
 
@@ -178,6 +217,36 @@ function collectPlayers(code, playerTarget, expandable) {
             socket.emit('player update', {"code": code, "id": gameId, "sender": playerId, "action": "ready", "status": 1});
         }
     }
+
+    // Setup game roles view
+    var allCardsBox = document.getElementById('rolesbox');
+    for(var roleNum of roleIDs) {
+        for(var card of allCards) {
+            if(card.id == roleNum) {
+                var cardElement = document.createElement('SPAN');
+                cardElement.className = card.class;
+                var name1 = document.createElement('LABEL');
+                name1.className = "leftjust";
+                var name2 = document.createElement('LABEL');
+                var name3 = document.createElement('LABEL');
+                name3.className = "rightjust";
+                if(card.name1 != undefined) {
+                    name1.innerHTML = card.name1;            
+                }
+                if(card.name2 != undefined) {
+                    name2.innerHTML = card.name2;            
+                }
+                if(card.name3 != undefined) {
+                    name3.innerHTML = card.name3;            
+                }
+                cardElement.appendChild(name1);
+                cardElement.appendChild(name2);
+                cardElement.appendChild(name3);
+                allCardsBox.appendChild(cardElement);
+            }
+        }
+    }
+
 
     function updatePlayers(players) {
         var readyBox = document.getElementById('readybox');
