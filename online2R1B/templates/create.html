@@ -11,7 +11,7 @@
 	<link rel="stylesheet" href="/static/dragula.min.css">
 	<h1>Choose Roles</h1>
 	<div id="gamecards">
-		<h2 class="fixed">This Game</h2>
+		<h2 id="gametitle" class="fixed">Game (2 Players)</h2>
 		<span class="blueredteam faded fixed" id="presidentbomber">
 			<label class="leftjust">President</label>
 			<label class="rightjust">Bomber</label>
@@ -22,7 +22,7 @@
 	</div>
 	<div id="bottombtns">
 		<button id="expandbtn">Auto-Expand with Blue/Red Team, Gambler</button>
-		<button id="createbtn">Create Game</button>
+		<button id="createbtn" disabled="disabled">Create Game</button>
 	</div>
 	<form id="gameform" method="post">
 		<input type="hidden" name="roles" id="rolesinput">

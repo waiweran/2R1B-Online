@@ -9,7 +9,7 @@
 	{% if rejoin %}
 		onload='rejoinGame()'
 	{% else %}
-		onload='collectPlayers("{{ code }}", parseInt("{{ game_info.min_players }}"), "{{ game_info.expandable }}" == "True")'
+		onload='collectPlayers("{{ code }}", JSON.parse("{{ roles }}"), parseInt("{{ game_info.min_players }}"), "{{ game_info.expandable }}" == "True")'
 	{% endif %}
 	>
 	<div id="joinbox">
@@ -24,6 +24,13 @@
 		</div>
 		<div id="readybox">
 			<h2 id="players">Players (0 of {{ num_players }}{% if expand %}+{% endif %})</h2>
+		</div>
+		<div id="rolesbox">
+			<h2>Roles</h2>
+			<span class="blueredteam" id="presidentbomber">
+				<label class="leftjust">President</label>
+				<label class="rightjust">Bomber</label>
+			</span>
 		</div>
 	</div>
 	<div id="gamebox">
@@ -138,7 +145,7 @@
   		top: 50%;
   		left: 50%;
   		transform: translate(-50%, -50%);
-  		width: 80%;
+  		width: 90%;
   		height: 80%;
 		padding: 20px;
 		text-align: center;
@@ -149,7 +156,7 @@
 	#namebox {
 		position: fixed;
   		top: 50%;
-  		left: 25%;
+  		left: 15%;
   		transform: translate(-50%, -50%);
 		padding: 20px;
 		text-align: center;
@@ -159,16 +166,67 @@
 	}
 	#readybox {
 		position: fixed;
-		width: 40%;
-  		top: 50%;
-  		left: 75%;
+		width: 25%;
+		max-height: 70%;
+  		top: 57%;
+  		left: 45%;
   		transform: translate(-50%, -50%);
 		padding: 20px;
 		text-align: center;
 		box-shadow: 0 0 5px 5px #d0d0d0;
 		border-radius: 10px;
 		background-color: #d0d0d0;
+		overflow: auto;
 	}
+	#rolesbox {
+		position: fixed;
+		width: 25%;
+		min-width: 250px;
+		max-height: 70%;
+  		top: 57%;
+  		left: 80%;
+  		transform: translate(-50%, -50%);
+		padding: 20px;
+		text-align: center;
+		box-shadow: 0 0 5px 5px #d0d0d0;
+		border-radius: 10px;
+		background-color: #d0d0d0;
+		overflow: auto;
+	}
+	#rolesbox span {
+		height: 26px;
+		margin: 5px;
+		padding-top: 4px;
+		color: white;
+		border: none;
+		font-size: 20px;
+		text-align: center;
+		border-radius: 10px;
+		display: block;
+	}
+	#rolesbox span label {
+		margin: 0 10px;
+		color: white;
+	}
+	#rolesbox .grayteam {
+		background-color: #939394;
+	}
+	#rolesbox .greenteam {
+		background-color: #6bb546;
+	}
+	#rolesbox .unknownteam {
+		background-color: #6d5594;
+	}
+	#rolesbox .blueredteam {
+		background-image: linear-gradient(to right, #3a56a5, #3a56a5, #ee1c29, #ee1c29);
+	}
+	#rolesbox span label.leftjust {
+		float: left;
+	}
+	#rolesbox span label.rightjust {
+		float: right;
+	}
+
 	#myroom {
 		position: fixed;
 		width: 60%;
