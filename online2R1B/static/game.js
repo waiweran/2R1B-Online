@@ -179,7 +179,6 @@ function createGame() {
 
 function collectPlayers(code, roleIDs, playerTarget, expandable) {
     document.getElementById("gamebox").style.display = "none";
-    console.log('entering normally')
 
     // Initiate force start for testing
     if(getCookie("go") != null) {
@@ -343,12 +342,10 @@ function rejoinGame() {
     var gameId = getCookie('id');
     var playerNum = parseInt(getCookie('num'));
     socket.on('game rejoin', function(gameMsg) {
-        console.log('Received rejoin info')
         document.getElementById('gamebox').style.display = "";
         initialize(gameMsg, playerNum, true);
     });
     if(gameId != null && playerNum != null) {
-        console.log('Rejoining Game');
         socket.emit('game reenter', {"id": gameId, "sender": playerNum})
     }
     else {
@@ -358,8 +355,19 @@ function rejoinGame() {
 
 
 function initialize(game, myPlayerNum, rejoin) {
+    
+	// Set cookies for rejoining
     setCookie('id', game.id, 1);
     setCookie('num', myPlayerNum, 1);
+
+    // Set time offset
+    var timeOffset = 0;
+    socket.emit('time check', {"localTime": Date.now()})
+    socket.on('time check', function(msg) {
+    	var localTime = (Date.now() + msg.localTime)/2;
+    	timeOffset = msg.serverTime - localTime;
+    	console.log("Updating time offset: " + timeOffset);
+    });
 
     // Hide overlays
     document.getElementById('bothrooms').style.display = "none";
@@ -661,7 +669,7 @@ function initialize(game, myPlayerNum, rejoin) {
             startRoundBtn.disabled = false;
         }, 15000)
         startRoundBtn.onclick = function() {
-            gameUpdate({"action": "startround", "startTime": Date.now()});
+            gameUpdate({"action": "startround", "startTime": Date.now() + timeOffset});
         };
 
         // Set the timer
@@ -680,7 +688,7 @@ function initialize(game, myPlayerNum, rejoin) {
         document.getElementById('fade').style.display = "none";
 
         // Start the round timer
-        var roundEndTime = startTime + 60000*round.time;
+        var roundEndTime = startTime - timeOffset + 60000*round.time;
         var roundTimer = setInterval(function runTimer() {
             var timeLeft = roundEndTime - Date.now();
             timer.innerHTML = "Round " + round.num + "<br>" + Math.floor(timeLeft/60000)

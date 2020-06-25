@@ -4,7 +4,7 @@ from online2R1B import db, socketio, models
 from online2R1B.game import Game, Player, Action
 
 import pickle
-
+import time
 
 @socketio.on('force start')
 def handle_force_start(json):
@@ -196,6 +196,12 @@ def handle_game_reenter(json):
             'myShareCount': len(sender.shares),
             'currentAction': current_action,
         }, room=sender.sid)
+
+
+@socketio.on('time check')
+def handle_time_check(json):
+    json['serverTime'] = int(round(time.time() * 1000))
+    socketio.emit('time check', json, room=request.sid)
 
 
 @socketio.on('quick event')
