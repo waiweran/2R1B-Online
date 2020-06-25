@@ -688,12 +688,12 @@ function initialize(game, myPlayerNum, rejoin) {
         document.getElementById('fade').style.display = "none";
 
         // Start the round timer
-        var roundEndTime = startTime - timeOffset + 60000*round.time;
+        var roundEndTime = startTime + 60000*round.time;
         var roundTimer = setInterval(function runTimer() {
-            var timeLeft = roundEndTime - Date.now();
+            var timeLeft = roundEndTime - (Date.now() + timeOffset);
             timer.innerHTML = "Round " + round.num + "<br>" + Math.floor(timeLeft/60000)
                      + ":" + Math.floor(timeLeft/10000)%6 + "" + Math.floor(timeLeft/1000)%10;
-            if(Date.now() > roundEndTime) {
+            if(Date.now() + timeOffset > roundEndTime) {
                 clearInterval(roundTimer);
                 timer.innerHTML = "Round " + round.num + "<br>0:00";
                 document.getElementById('sharing').style.display = "none";
