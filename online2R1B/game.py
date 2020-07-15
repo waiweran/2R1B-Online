@@ -484,6 +484,8 @@ class Player:
                 self.conditions.discard('paranoid')
             else:
                 self.conditions.add('foolish')
+        elif player.role.id in ('bluemummy', 'redmummy'):
+            self.conditions.add('cursed')
 
         # Removing Conditions
         elif player.role.id in ('redmedic', 'bluemedic'):
@@ -497,6 +499,8 @@ class Player:
             self.conditions.discard('zombie')
             self.conditions.discard('in love')
             self.conditions.discard('in hate')
+            self.conditions.discard('blind')
+            self.conditions.discard('cursed')
         elif player.role.id in ('redpsychologist', 'bluepsychologist'):
             self.conditions.discard('coy')
             self.conditions.discard('shy')

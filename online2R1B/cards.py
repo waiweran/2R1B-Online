@@ -33,6 +33,10 @@ allCards = [
     {"name2": "Private Eye", "class": "grayteam", "num": 1, "bury": True, "id": 34},
     {"name2": 'Drunk', "class": "unknownteam", "num": 0, "id": 11},
     {"name2": 'Zombie', "class": "greenteam", "num": 1, "id": 14},
+    {"name1": "Blind", "name3": "Blind", "class": "blueredteam", "num": 2, "id": 35},
+    {"name1": "Clown", "name3": "Clown", "class": "blueredteam", "num": 2, "id": 36},
+    {"name1": "Mime", "name3": "Mime", "class": "blueredteam", "num": 2, "id": 37},
+    {"name1": "Mummy", "name3": "Mummy", "class": "blueredteam", "num": 2, "id": 38},
     {"name1": "Blue Team", "name3": "Red Team", "class": "blueredteam", "num": 2, "id": 0},
 ]
 
@@ -164,6 +168,22 @@ roleList = [
     [
         {'id': 'privateeye', 'source': '/static/Cards/PrivateEye.png', 'team': 0},
     ],
+    [
+        {'id': 'blueblind', 'source': '/static/Cards/BlueBlind.png', 'team': 1, 'conditions': ['blind']},
+        {'id': 'redblind', 'source': '/static/Cards/RedBlind.png', 'team': 2, 'conditions': ['blind']},
+    ],
+    [
+        {'id': 'blueclown', 'source': '/static/Cards/BlueClown.png', 'team': 1},
+        {'id': 'redclown', 'source': '/static/Cards/RedClown.png', 'team': 2},
+    ],
+    [
+        {'id': 'bluemime', 'source': '/static/Cards/BlueMime.png', 'team': 1},
+        {'id': 'redmime', 'source': '/static/Cards/RedMime.png', 'team': 2},
+    ],
+    [
+        {'id': 'bluemummy', 'source': '/static/Cards/BlueMummy.png', 'team': 1},
+        {'id': 'redmummy', 'source': '/static/Cards/RedMummy.png', 'team': 2},
+    ],
 
 ]
 
@@ -181,4 +201,4 @@ no_bury = {
 # Dr. Boom/Tuesday Knight, Enforcer, Invincible, Mastermind, Mayor, Minion, Robot, Security,
 # Traveler, Usurper.
 
-# Not useful to include: Blind, Clown, Mime, Mummy, Paparazzo
+# Not useful to include: Paparazzo

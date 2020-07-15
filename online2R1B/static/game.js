@@ -37,6 +37,10 @@ var allCards = [
     {"name2": "Private Eye", "class": "grayteam", "num": 1, "bury": true, "id": 34},
     {"name2": 'Drunk', "class": "unknownteam", "num": 0, "id": 11},
     {"name2": 'Zombie', "class": "greenteam", "num": 1, "id": 14},
+    {"name1": "Blind", "name3": "Blind", "class": "blueredteam", "num": 2, "id": 35},
+    {"name1": "Clown", "name3": "Clown", "class": "blueredteam", "num": 2, "id": 36},
+    {"name1": "Mime", "name3": "Mime", "class": "blueredteam", "num": 2, "id": 37},
+    {"name1": "Mummy", "name3": "Mummy", "class": "blueredteam", "num": 2, "id": 38},
     {"name1": "Blue Team", "name3": "Red Team", "class": "blueredteam", "num": 2, "id": 0},
 ];
 
@@ -645,8 +649,11 @@ function initialize(game, myPlayerNum, rejoin) {
             else if(conditions[i] == 'savvy') {
                 condstr = condstr + 'Savvy';
             }
-            else if(conditions[i] == 'paranoid') {
-                condstr = condstr + 'Paranoid';
+            else if(conditions[i] == 'blind') {
+                condstr = condstr + 'Blind';
+            }
+            else if(conditions[i] == 'cursed') {
+                condstr = condstr + 'Cursed (Make No Noise)';
             }
 
             if(i < conditions.length - 1) {
@@ -658,7 +665,7 @@ function initialize(game, myPlayerNum, rejoin) {
 
     function updateRoles() {
         for(var player of players) {
-            if(player.role != undefined) {
+            if(player.role != undefined && !conditions.includes('blind')) {
                 player.permanentRole.src = player.role;                
             }
         }
@@ -850,7 +857,12 @@ function initialize(game, myPlayerNum, rejoin) {
             document.getElementById("sharetitle").innerHTML = title;
             document.getElementById("sharename").innerHTML = player.name;
             var shareCard = document.getElementById("sharecard");
-            shareCard.src = team;
+            if(conditions.includes('blind')) {
+                shareCard.src = "";
+            }
+            else {
+                shareCard.src = team;                
+            }
             shareCard.style.height = "14%";
             var shareBox = document.getElementById("sharing");
             var fadeBox = document.getElementById('fade');
@@ -882,7 +894,12 @@ function initialize(game, myPlayerNum, rejoin) {
             document.getElementById("sharetitle").innerHTML = title;
             document.getElementById("sharename").innerHTML = player.name;
             var shareCard = document.getElementById("sharecard");
-            shareCard.src = source;
+            if(conditions.includes('blind')) {
+                shareCard.src = "";
+            }
+            else {
+                shareCard.src = source;
+            }
             shareCard.style.height = "60%";
             var shareBox = document.getElementById("sharing");
             var fadeBox = document.getElementById('fade');
