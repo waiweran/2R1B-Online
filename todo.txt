@@ -1,12 +1,11 @@
 High Priority
 
-Make public and private reveal support color reveals too
+Include more cards
+Add links to rules, character guide
 
 
 Medium Priority
 
-Include more cards
-Add links to rules, character guide
 Disable color sharing in games with 10 or fewer players (maybe)
 Add tutorial
 

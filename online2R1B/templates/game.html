@@ -68,6 +68,13 @@
 			<br>
 			<button id="shareclose">Close</button>
 		</div>
+		<div class="overlay" id="revealing">
+			<h2>Choose Reveal Type</h2>
+			<button id="revealcolor">Color</button>
+			<button id="revealcard">Card</button>
+			<br><br>
+			<button id="revealcancel">Cancel</button>
+		</div>
 		<div class="overlay" id="victory">
 			<h1 id="victorytitle"></h1>
 			<a href="/">Exit</a>
@@ -239,7 +246,7 @@
 		box-shadow: 0 0 5px 5px #d0d0d0;
 		border-radius: 10px;
 		background-color: #d0d0d0;
-		overflow: scroll;
+		overflow: auto;
 	}
 	#myroom button {
 		margin: 5px;
@@ -335,6 +342,10 @@
 	.overlay h1, .overlay h2 {
 		text-transform: none;
 		margin: 15px 30px 10px 30px;
+	}
+	#revealing {
+		height: auto;
+		padding-bottom: 15px;
 	}
 	#hostageroom {
 		text-align: left;

@@ -616,7 +616,7 @@ def deal_roles(num_players: int, choices: List[int]) -> Tuple[List['Role'], List
         "/static/Teams/GreyTeam.png",
         "/static/Teams/BlueTeam.png",
         "/static/Teams/RedTeam.png",
-        "/static/Teams/UndeadTeam.png",
+        "/static/Teams/ZombieTeam.png",
         "/static/Teams/GreenTeam.png",
         "/static/Teams/UnknownTeam.png",
     ]

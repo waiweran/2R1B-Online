@@ -283,27 +283,52 @@ def process_event(json, game_entry, game_obj, sender):
         if 'shy' not in sender.conditions and 'coy' not in sender.conditions and \
                 'savvy' not in sender.conditions and 'paranoid' not in sender.conditions:
             target = game_obj.players[json['target']]
-            game_obj.actions.extend(sender.mark_private_reveal(target))
-            game_obj.actions.append(Action(target.num, {
-                'action': 'privatereveal',
-                'target': sender.num,
-                'role': sender.role.source,
-            }))
-            game_obj.actions.append(Action(sender.num, {
-                'action': 'privatereveal',
-                'target': sender.num,
-                'role': sender.role.source,
-            }))
+            if json['type'] == 'card':
+                game_obj.actions.extend(sender.mark_private_reveal(target))
+                game_obj.actions.append(Action(target.num, {
+                    'action': 'privatereveal',
+                    'target': sender.num,
+                    'type': 'card',
+                    'role': sender.role.source,
+                }))
+                game_obj.actions.append(Action(sender.num, {
+                    'action': 'privatereveal',
+                    'target': sender.num,
+                    'type': 'card',
+                    'role': sender.role.source,
+                }))
+            else:
+                game_obj.actions.append(Action(target.num, {
+                    'action': 'privatereveal',
+                    'target': sender.num,
+                    'type': 'color',
+                    'team': sender.role.team_source,
+                }))
+                game_obj.actions.append(Action(sender.num, {
+                    'action': 'privatereveal',
+                    'target': sender.num,
+                    'type': 'color',
+                    'team': sender.role.team_source,
+                }))
 
     elif json['action'] == 'publicreveal':
         if 'shy' not in sender.conditions and 'coy' not in sender.conditions and \
                 'savvy' not in sender.conditions and 'paranoid' not in sender.conditions:
-            game_obj.actions.extend(sender.mark_public_reveal())
-            game_obj.actions.append(Action('room', {
-                'action': 'publicreveal',
-                'target': sender.num,
-                'role': sender.role.source,
-            }))
+            if json['type'] == 'card':
+                game_obj.actions.extend(sender.mark_public_reveal())
+                game_obj.actions.append(Action('room', {
+                    'action': 'publicreveal',
+                    'target': sender.num,
+                    'type': 'card',
+                    'role': sender.role.source,
+                }))
+            else:
+                game_obj.actions.append(Action('room', {
+                    'action': 'publicreveal',
+                    'target': sender.num,
+                    'type': 'color',
+                    'team': sender.role.team_source,
+                }))
 
     elif json['action'] == 'permanentpublicreveal':
         if 'shy' not in sender.conditions and 'coy' not in sender.conditions and \

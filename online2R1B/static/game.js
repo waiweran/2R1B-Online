@@ -356,7 +356,7 @@ function rejoinGame() {
 
 function initialize(game, myPlayerNum, rejoin) {
     
-	// Set cookies for rejoining
+    // Set cookies for rejoining
     setCookie('id', game.id, 1);
     setCookie('num', myPlayerNum, 1);
 
@@ -364,9 +364,9 @@ function initialize(game, myPlayerNum, rejoin) {
     var timeOffset = 0;
     socket.emit('time check', {"localTime": Date.now()})
     socket.on('time check', function(msg) {
-    	var localTime = (Date.now() + msg.localTime)/2;
-    	timeOffset = msg.serverTime - localTime;
-    	console.log("Updating time offset: " + timeOffset);
+        var localTime = (Date.now() + msg.localTime)/2;
+        timeOffset = msg.serverTime - localTime;
+        console.log("Updating time offset: " + timeOffset);
     });
 
     // Hide overlays
@@ -374,6 +374,7 @@ function initialize(game, myPlayerNum, rejoin) {
     document.getElementById('hostages').style.display = "none";
     document.getElementById('decision').style.display = "none";
     document.getElementById('sharing').style.display = "none";
+    document.getElementById('revealing').style.display = "none";
     document.getElementById('victory').style.display = "none";
 
     // Setup my card
@@ -385,7 +386,24 @@ function initialize(game, myPlayerNum, rejoin) {
     var publicRevealBtn = document.getElementById('publicreveal');
     var permanentPublicRevealBtn = document.getElementById('permanentpublicreveal');
     publicRevealBtn.onclick = function() {
-        gameUpdate({"action": "publicreveal"});
+        var revealPane = document.getElementById("revealing");
+        var fadeBox = document.getElementById('fade');
+        revealPane.style.display = "";
+        fadeBox.style.display = "";
+        document.getElementById("revealcolor").onclick = function(e) {
+            gameUpdate({"action": "publicreveal", "type": "color"});
+            revealPane.style.display = "none";
+            fadeBox.style.display = "none";
+        }
+        document.getElementById("revealcard").onclick = function(e) {
+            gameUpdate({"action": "publicreveal", "type": "card"});
+            revealPane.style.display = "none";
+            fadeBox.style.display = "none";
+        }
+        document.getElementById("revealcancel").onclick = function(e) {
+            revealPane.style.display = "none";
+            fadeBox.style.display = "none";
+        }
     }
     permanentPublicRevealBtn.onclick = function() {
         gameUpdate({"action": "permanentpublicreveal"});
@@ -506,7 +524,24 @@ function initialize(game, myPlayerNum, rejoin) {
         player.privateRevealBtn = document.createElement('BUTTON');
         player.privateRevealBtn.innerHTML = "Private Reveal";
         player.privateRevealBtn.onclick = function(e) {
-            gameUpdate({"action": "privatereveal", "target": i});
+            var revealPane = document.getElementById("revealing");
+            var fadeBox = document.getElementById('fade');
+            revealPane.style.display = "";
+            fadeBox.style.display = "";
+            document.getElementById("revealcolor").onclick = function(e) {
+                gameUpdate({"action": "privatereveal", "target": i, "type": "color"});
+                revealPane.style.display = "none";
+                fadeBox.style.display = "none";
+            }
+            document.getElementById("revealcard").onclick = function(e) {
+                gameUpdate({"action": "privatereveal", "target": i, "type": "card"});
+                revealPane.style.display = "none";
+                fadeBox.style.display = "none";
+            }
+            document.getElementById("revealcancel").onclick = function(e) {
+                revealPane.style.display = "none";
+                fadeBox.style.display = "none";
+            }
         };
         player.element.appendChild(player.privateRevealBtn);
         player.colorShareBtn = document.createElement('BUTTON');
@@ -697,6 +732,7 @@ function initialize(game, myPlayerNum, rejoin) {
                 clearInterval(roundTimer);
                 timer.innerHTML = "Round " + round.num + "<br>0:00";
                 document.getElementById('sharing').style.display = "none";
+                document.getElementById('revealing').style.display = "none";
                 document.getElementById('fade').style.display = "";
                 setupHostages(round.hostages);
                 document.getElementById('hostages').style.display = "";
@@ -1051,10 +1087,20 @@ function initialize(game, myPlayerNum, rejoin) {
             }
         }
         else if(msg.action == 'privatereveal') {
-            cardShow(players[msg.target], msg.role, 'Private Reveal');
+            if(msg.type == 'card') {
+                cardShow(players[msg.target], msg.role, 'Private Reveal');                
+            }
+            else {
+                teamShow(players[msg.target], msg.team, 'Private Reveal');
+            }
         }
         else if(msg.action == 'publicreveal') {
-            cardShow(players[msg.target], msg.role, 'Public Reveal');
+            if(msg.type == 'card') {
+                cardShow(players[msg.target], msg.role, 'Public Reveal');                
+            }
+            else {
+                teamShow(players[msg.target], msg.team, 'Public Reveal');
+            }
         }
         else if(msg.action == 'permanentpublicreveal') {
             players[msg.target].role = msg.role;
