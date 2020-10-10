@@ -73,12 +73,12 @@ roleList = [
         {'id': 'redshyguy', 'source': '/static/Cards/RedShyGuy.png', 'team': 2, 'conditions': ['shy']},
     ],
     [
-        {'id': 'bluecriminal', 'source': '/static/Cards/BlueCriminal.png', 'team': 1},
-        {'id': 'redcriminal', 'source': '/static/Cards/RedCriminal.png', 'team': 2},
-    ],
-    [
         {'id': 'bluethug', 'source': '/static/Cards/BlueThug.png', 'team': 1},
         {'id': 'redthug', 'source': '/static/Cards/RedThug.png', 'team': 2},
+    ],
+    [
+        {'id': 'bluecriminal', 'source': '/static/Cards/BlueCriminal.png', 'team': 1},
+        {'id': 'redcriminal', 'source': '/static/Cards/RedCriminal.png', 'team': 2},
     ],
     [
         {'id': 'bluedealer', 'source': '/static/Cards/BlueDealer.png', 'team': 1},
