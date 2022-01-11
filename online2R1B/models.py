@@ -12,6 +12,7 @@ class Player(db.Model):
 class Game(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     code = db.Column(db.String(4), unique=True)
+    timestamp = db.Column(db.DateTime)
     setup = db.Column(db.PickleType)
     min_players = db.Column(db.Integer)
     expandable = db.Column(db.Boolean)

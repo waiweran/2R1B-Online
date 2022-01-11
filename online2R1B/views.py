@@ -4,6 +4,7 @@ from online2R1B import app, db, models, cards
 import random
 import pickle
 import json
+import datetime
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -39,7 +40,8 @@ def create():
         setup = json.loads(request.form['roles'])
         num_players = request.form['numplayers']
         expandable = request.form['expand'] == 'true'
-        db_game = models.Game(code=code, setup=pickle.dumps(setup), min_players=num_players, expandable=expandable)
+        db_game = models.Game(code=code, timestamp=datetime.datetime.now(), setup=pickle.dumps(setup),
+                              min_players=num_players, expandable=expandable)
         db.session.add(db_game)
         db.session.commit()
         return redirect('/play')
@@ -50,3 +52,10 @@ def create():
 @app.route('/test/<toggle>/')
 def test(toggle):
     return render_template('test.html', toggle=(toggle == 'true'))
+
+
+@app.route('/stats/')
+def stats():
+    games = models.Game.query.with_entities(models.Game.timestamp,
+                                            models.Game.min_players, models.Game.expandable).all()
+    return render_template('stats.html', games=games, total=len(games))

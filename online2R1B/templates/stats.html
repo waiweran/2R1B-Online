@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>2 Rooms and a Boom</title>
+</head>
+<body>
+	<h1 id="title">Game Log</h1>
+	<div id="mainbox">
+		Total: {{ total }}
+		<br>
+		<br>
+		{% for game in games %}
+			<p>{{ game.0 }} &nbsp&nbsp | &nbsp&nbsp {{ game.1 }}{% if game.2 %}+{% endif %}</p>
+		{% endfor %}
+	</div>
+</body>
+<style>
+	body {
+		background-color: #e0e0e0;
+		text-align: center;
+	}
+	h1 {
+		color: #333333;
+		font-size: 50px;
+		text-transform: uppercase;
+	}
+	#title {
+		position: fixed;
+  		top: 10%;
+  		left: 50%;
+  		transform: translate(-50%, -50%);
+	}
+	#mainbox {
+		position: fixed;
+  		top: 25%;
+  		left: 50%;
+  		width: 60%;
+  		transform: translate(-50%, 0%);
+		padding: 20px 40px;
+		text-align: left;
+		box-shadow: 0 0 5px 5px #c0c0c0;
+		border-radius: 10px;
+		background-color: #c0c0c0;
+	}
+</style>
+</html>
