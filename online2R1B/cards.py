@@ -12,6 +12,7 @@ allCards = [
     {"name1": "Paranoid", "name3": "Paranoid", "class": "blueredteam", "num": 2, "id": 26},
     {"name1": "Medic", "name3": "Medic", "class": "blueredteam", "num": 2, "id": 27},
     {"name1": "Psychologist", "name3": "Psychologist", "class": "blueredteam", "num": 2, "id": 28},
+    {"name1": "Tuesday Knight", "name3": "Dr. Boom", "class": "blueredteam", "num": 2, "id": 39},
     {"name2": 'Gambler', "class": "grayteam", "num": 1, "id": 13},
     {"name2": 'MI6', "class": "grayteam", "num": 1, "id": 4},
     {"name2": 'Nuclear Tyrant', "class": "grayteam", "num": 1, "id": 31},
@@ -184,6 +185,10 @@ roleList = [
         {'id': 'bluemummy', 'source': '/static/Cards/BlueMummy.png', 'team': 1},
         {'id': 'redmummy', 'source': '/static/Cards/RedMummy.png', 'team': 2},
     ],
+    [
+        {'id': 'tuesdayknight', 'source': '/static/Cards/TuesdayKnight.png', 'team': 1},
+        {'id': 'drboom', 'source': '/static/Cards/DrBoom.png', 'team': 2},
+    ],
 
 ]
 
@@ -198,7 +203,7 @@ no_bury = {
 
 
 # Not included yet: Agent, Agoraphobe, Anarchist, Ambassador, Bouncer, Clone, Conman, Cupid/Eris,
-# Dr. Boom/Tuesday Knight, Enforcer, Invincible, Mastermind, Mayor, Minion, Robot, Security,
+# Enforcer, Invincible, Mastermind, Mayor, Minion, Robot, Security,
 # Traveler, Usurper.
 
 # Not useful to include: Paparazzo

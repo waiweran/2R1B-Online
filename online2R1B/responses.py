@@ -6,6 +6,7 @@ from online2R1B.game import Game, Player, Action
 import pickle
 import time
 
+
 @socketio.on('force start')
 def handle_force_start(json):
     join_room(json['code'])

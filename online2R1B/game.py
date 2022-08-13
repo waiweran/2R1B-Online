@@ -168,6 +168,18 @@ class Game:
                 'conditions': list(player2.conditions),
                 'shares': len(player2.shares),
             }))
+        elif player1.role.id == 'drboom' and player2.role.id == 'president' or \
+                 player2.role.id == 'drboom' and player1.role.id == 'president':
+            for player in self.players:
+                if player.room == player1.room:
+                    player.conditions.add('dead')
+            self.end_game(early=True)
+        elif player1.role.id == 'tuesdayknight' and player2.role.id == 'bomber' or \
+                player2.role.id == 'tuesdayknight' and player1.role.id == 'bomber':
+            for player in self.players:
+                if player.room == player1.room and player.role.id != 'president':
+                    player.conditions.add('dead')
+            self.end_game(early=True)
 
     def end_round(self):
         self.round += 1
@@ -176,9 +188,9 @@ class Game:
             player.my_votes.clear()
             player.votes = 0
 
-    def end_game(self):
+    def end_game(self, early=False):
         info = list()
-        winners = self.calc_winners()
+        winners = self.calc_winners(early)
         for player in self.players:
             info.append({
                 'room': player.room,
@@ -191,7 +203,7 @@ class Game:
             'info': info,
         }, blocking=True))
 
-    def calc_winners(self):
+    def calc_winners(self, early=False):
         nt_index = -1
         president = None
         bomber = None
@@ -208,21 +220,23 @@ class Game:
             for player in self.players:
                 if player.role.id == 'martyr':
                     bomber = player
-
-        if 'ill' in president.conditions:
-            if not self.settings['bury'] or \
-                    self.settings['bury'].id != 'doctor' or 'nursed' not in president.conditions:
-                president.conditions.discard('ill')
-                president.conditions.add('dead')
-        if 'broken' in bomber.conditions:
-            if not self.settings['bury'] or \
-                    self.settings['bury'].id != 'engineer' or 'tinkered' not in bomber.conditions:
-                bomber.conditions.discard('broken')
-                bomber.conditions.add('fizzled')
+        if early:
+            pass  # Tuesday Knight and Dr. Boom perform game-end changes separately
         else:
-            for player in self.players:
-                if player.room == bomber.room:
-                    player.conditions.add('dead')
+            if 'ill' in president.conditions:
+                if not self.settings['bury'] or \
+                        self.settings['bury'].id != 'doctor' or 'nursed' not in president.conditions:
+                    president.conditions.discard('ill')
+                    president.conditions.add('dead')
+            if 'broken' in bomber.conditions:
+                if not self.settings['bury'] or \
+                        self.settings['bury'].id != 'engineer' or 'tinkered' not in bomber.conditions:
+                    bomber.conditions.discard('broken')
+                    bomber.conditions.add('fizzled')
+            else:
+                for player in self.players:
+                    if player.room == bomber.room:
+                        player.conditions.add('dead')
 
         winners = list()
         for player in self.players:

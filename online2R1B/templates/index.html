@@ -15,7 +15,12 @@
 		<br>
 		<a id="create" href="/create/">Create Game</a>
 	</div>
-	<a id="rejoin" href="/play/">Rejoin Last Game</a>
+	<div id="rejoin">
+		Game by <a href="https://www.tuesdayknightgames.com/">Tuesday Knight Games</a> &nbsp | &nbsp <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons License BY–NC–SA 4.0</a>
+		<br>
+		<br>
+		<a href="/play/">Rejoin Last Game</a>
+	</div>
 </body>
 <style>
 	body {
@@ -80,10 +85,16 @@
 	}
 	#rejoin {
 		position: fixed;
-  		top: 93%;
+		width: 90%;
+  		top: 90%;
   		left: 50%;
   		transform: translate(-50%, -50%);
 		padding: 5px;
+		color: #989898;
+		font-size: 18px;
+		text-transform: uppercase;
+	}
+	#rejoin a {
 		color: #989898;
 		font-size: 18px;
 		text-transform: uppercase;
