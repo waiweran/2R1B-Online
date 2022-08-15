@@ -4,13 +4,13 @@ from online2R1B import cards
 
 
 class Game:
-
     players: List['Player']
     num_players: int
     roles: List['Role']
     settings: dict
     rounds: List[dict]
     leaders: List[Optional[int]]
+    usurped: List[bool]
     round: int
     start_time: Optional[int]
     rooms_sending_hostages: List[dict]
@@ -24,6 +24,7 @@ class Game:
         self.roles, rooms, self.settings = deal_roles(self.num_players, choices)
         self.rounds = []
         self.leaders = [None, None]
+        self.usurped = [False, False]
         self.round = 0
         self.start_time = None
         self.rooms_sending_hostages = list()
@@ -48,6 +49,27 @@ class Game:
                 break
 
     def setup_round(self):
+        # Update Drunk
+        if self.round == len(self.rounds) - 1 and self.settings['drunk']:
+            for player in self.players:
+                if player.role.id == 'drunk':
+                    player.role = self.settings['drunk']
+                    player.conditions.clear()
+                    player.conditions.update(player.role.conditions)
+                    self.actions.append(Action(player.num, {
+                        'action': 'updateplayer',
+                        'role': {'id': player.role.id, 'source': player.role.source},
+                        'conditions': list(player.conditions),
+                        'shares': len(player.shares),
+                    }))
+                    if player.revealed:
+                        player.revealed = False
+                        self.actions.append(Action('room', {
+                            'action': 'hiderole',
+                            'target': player.num,
+                        }))
+
+        # End game questions
         if self.round >= len(self.rounds):
             for player in self.players:
                 if player.role.id == 'privateeye':
@@ -78,6 +100,8 @@ class Game:
                         'target': player.num
                     }, blocking=True))
             self.actions.append(Action('server', 'endgame'))
+
+        # New Round Start
         else:
             rooms = list()
             for player in self.players:
@@ -98,25 +122,34 @@ class Game:
                     'leaders': self.leaders,
                     'roles': roles,
                 }))
-        if self.round == len(self.rounds) - 2 and self.settings['drunk']:
-            for player in self.players:
-                if player.role.id == 'drunk':
-                    player.role = self.settings['drunk']
-                    player.conditions.clear()
-                    player.conditions.update(player.role.conditions)
-                    self.actions.append(Action(player.num, {
-                        'action': 'updateplayer',
-                        'role': player.role.source,
-                        'conditions': list(player.conditions),
-                        'shares': len(player.shares),
-                    }))
 
     def mark_color_share(self, player1: 'Player', player2: 'Player'):
         self.actions.extend(player1.mark_color_share(player2))
         self.actions.extend(player2.mark_color_share(player1))
-        if player1.role.id == 'hotpotato' or player2.role.id == 'hotpotato' or \
-                (player1.role.id == 'leprechaun' and not player2.leprechaun) or \
-                (player2.role.id == 'leprechaun' and not player1.leprechaun):
+        self._check_role_swap(player1, player2)
+
+    def mark_card_share(self, player1: 'Player', player2: 'Player'):
+        self.actions.extend(player1.mark_card_share(player2))
+        self.actions.extend(player2.mark_card_share(player1))
+        self._check_role_swap(player1, player2)
+        if player1.role.id == 'drboom' and player2.role.id == 'president' or \
+                player2.role.id == 'drboom' and player1.role.id == 'president':
+            for player in self.players:
+                if player.room == player1.room and 'immune' not in player.conditions:
+                    player.conditions.add('dead')
+            self.end_game(early=True)
+        elif player1.role.id == 'tuesdayknight' and player2.role.id == 'bomber' or \
+                player2.role.id == 'tuesdayknight' and player1.role.id == 'bomber':
+            for player in self.players:
+                if player.room == player1.room and player.role.id != 'president' and 'immune' not in player.conditions:
+                    player.conditions.add('dead')
+            self.end_game(early=True)
+
+    def _check_role_swap(self, player1, player2):
+        if (player1.role.id == 'hotpotato' or player2.role.id == 'hotpotato' or
+                (player1.role.id == 'leprechaun' and not player2.leprechaun) or
+                (player2.role.id == 'leprechaun' and not player1.leprechaun)) and \
+                not ('immune' in player1.conditions or 'immune' in player2.conditions):
             temp = player1.role
             player1.role = player2.role
             player2.role = temp
@@ -132,54 +165,28 @@ class Game:
                 player2.leprechaun = True
             self.actions.append(Action(player1.num, {
                 'action': 'updateplayer',
-                'role': player1.role.source,
+                'role': {'id': player1.role.id, 'source': player1.role.source},
                 'conditions': list(player1.conditions),
                 'shares': len(player1.shares),
             }))
             self.actions.append(Action(player2.num, {
                 'action': 'updateplayer',
-                'role': player2.role.source,
+                'role': {'id': player2.role.id, 'source': player2.role.source},
                 'conditions': list(player2.conditions),
                 'shares': len(player2.shares),
             }))
-
-    def mark_card_share(self, player1: 'Player', player2: 'Player'):
-        self.actions.extend(player1.mark_card_share(player2))
-        self.actions.extend(player2.mark_card_share(player1))
-        if player1.role.id == 'hotpotato' or player2.role.id == 'hotpotato' or \
-                (player1.role.id == 'leprechaun' and not player2.leprechaun) or \
-                (player2.role.id == 'leprechaun' and not player1.leprechaun):
-            temp = player1.role
-            player1.role = player2.role
-            player2.role = temp
-            player1.conditions.clear()
-            player1.conditions.update(player1.role.conditions)
-            player2.conditions.clear()
-            player2.conditions.update(player2.role.conditions)
-            self.actions.append(Action(player1.num, {
-                'action': 'updateplayer',
-                'role': player1.role.source,
-                'conditions': list(player1.conditions),
-                'shares': len(player1.shares),
-            }))
-            self.actions.append(Action(player2.num, {
-                'action': 'updateplayer',
-                'role': player2.role.source,
-                'conditions': list(player2.conditions),
-                'shares': len(player2.shares),
-            }))
-        elif player1.role.id == 'drboom' and player2.role.id == 'president' or \
-                 player2.role.id == 'drboom' and player1.role.id == 'president':
-            for player in self.players:
-                if player.room == player1.room:
-                    player.conditions.add('dead')
-            self.end_game(early=True)
-        elif player1.role.id == 'tuesdayknight' and player2.role.id == 'bomber' or \
-                player2.role.id == 'tuesdayknight' and player1.role.id == 'bomber':
-            for player in self.players:
-                if player.room == player1.room and player.role.id != 'president':
-                    player.conditions.add('dead')
-            self.end_game(early=True)
+            if player1.revealed:
+                player1.revealed = False
+                self.actions.append(Action('room', {
+                    'action': 'hiderole',
+                    'target': player1.num,
+                }))
+            if player2.revealed:
+                player2.revealed = False
+                self.actions.append(Action('room', {
+                    'action': 'hiderole',
+                    'target': player2.num,
+                }))
 
     def end_round(self):
         self.round += 1
@@ -187,6 +194,7 @@ class Game:
         for player in self.players:
             player.my_votes.clear()
             player.votes = 0
+        self.usurped = [False, False]
 
     def end_game(self, early=False):
         info = list()
@@ -422,7 +430,7 @@ class Game:
                 winners.append(player.moves == 0)
 
             elif player.role.id == 'traveler':
-                winners.append(player.moves > self.round/2)
+                winners.append(player.moves > self.round / 2)
 
             # Add gray card win conditions here
 
@@ -437,7 +445,6 @@ class Game:
 
 
 class Player:
-
     name: str
     num: int
     sid: str
@@ -541,10 +548,15 @@ class Player:
             self.conditions.add('zombie')
             change = True
 
+        # Confer immunity
+        if 'immune' in self.conditions:
+            self.conditions.intersection_update({'immune'})
+            change = False
+
         if change:
             actions.append(Action(self.num, {
                 'action': 'updateplayer',
-                'role': self.role.source,
+                'role': {'id': self.role.id, 'source': self.role.source},
                 'conditions': list(self.conditions),
                 'shares': len(self.shares),
             }))
@@ -555,11 +567,11 @@ class Player:
         actions = list()
 
         # Zombie Condition
-        if player.role.team == 3 or 'zombie' in player.conditions:
+        if (player.role.team == 3 or 'zombie' in player.conditions) and 'immune' not in player.conditions:
             self.conditions.add('zombie')
             actions.append(Action(self.num, {
                 'action': 'updateplayer',
-                'role': self.role.source,
+                'role': {'id': self.role.id, 'source': self.role.source},
                 'conditions': list(self.conditions),
                 'shares': len(self.shares),
             }))
@@ -576,7 +588,7 @@ class Player:
             player.conditions.discard('paranoid')
             actions.append(Action(player.num, {
                 'action': 'updateplayer',
-                'role': player.role.source,
+                'role': {'id': player.role.id, 'source': player.role.source},
                 'conditions': list(player.conditions),
                 'shares': len(self.shares),
             }))

@@ -17,6 +17,8 @@ var allCards = [
     {"name1": "Medic", "name3": "Medic", "class": "blueredteam", "num": 2, "id": 27},
     {"name1": "Psychologist", "name3": "Psychologist", "class": "blueredteam", "num": 2, "id": 28},
     {"name1": "Tuesday Knight", "name3": "Dr. Boom", "class": "blueredteam", "num": 2, "id": 39},
+    {"name1": "Invincible", "name3": "Immunologist", "class": "blueredteam", "num": 2, "id": 42},
+    {"name1": "Usurper", "name3": "Usurper", "class": "blueredteam", "num": 2, "id": 43},
     {"name2": 'Gambler', "class": "grayteam", "num": 1, "id": 13},
     {"name2": 'MI6', "class": "grayteam", "num": 1, "id": 4},
     {"name2": 'Nuclear Tyrant', "class": "grayteam", "num": 1, "id": 31},
@@ -386,7 +388,7 @@ function initialize(game, myPlayerNum, rejoin) {
 
     // Setup my card
     var myCard = document.getElementById('mycard');
-    myCard.src = game.myRole;
+    myCard.src = game.myRole.source;
     var myPlayer = null;
     var conditions = game.myConditions;
     var numShares = 0;
@@ -426,6 +428,9 @@ function initialize(game, myPlayerNum, rejoin) {
     }
     publicRevealBtn.style.display = "none";
     permanentPublicRevealBtn.style.display = "none";
+    if(game.myRole.id == 'blueusurper' || game.myRole.id == 'redusurper') {
+        permanentPublicRevealBtn.innerHTML = "Reveal & Usurp"
+    }
 
     // General Setup
     var round = {"num": game.round, "time": game.time, "hostages": game.numHostages}
@@ -663,6 +668,14 @@ function initialize(game, myPlayerNum, rejoin) {
             }
             else if(conditions[i] == 'cursed') {
                 condstr = condstr + 'Cursed (Make No Noise)';
+            }
+
+            else if(conditions[i] == 'immune') {
+                condstr = condstr + 'Immune';
+            }
+
+            else if(conditions[i] == 'paranoid') {
+                condstr = condstr + 'Paranoid';
             }
 
             if(i < conditions.length - 1) {
@@ -1151,6 +1164,11 @@ function initialize(game, myPlayerNum, rejoin) {
             cardShow(players[msg.target], msg.role, 'Permanent Reveal', false);
             updateRoles();
         }
+        else if(msg.action == 'hiderole') {
+            players[msg.target].role = "/static/Cards/Back.png";
+            updateRoles();
+            players[msg.target].role = null;
+        }
         else if(msg.action == 'colorshare') {
             teamShow(players[msg.target], msg.team, 'Color Share', msg.zombie);
         }
@@ -1167,11 +1185,14 @@ function initialize(game, myPlayerNum, rejoin) {
             updateVoting();
         }
         else if(msg.action == 'updateplayer') {
-            myCard.src = msg.role;
+            myCard.src = msg.role.source;
             game.myRole = msg.role;
             conditions = msg.conditions;
             numShares = msg.shares;
             updateConditions();
+            if(game.myRole.id == 'blueusurper' || game.myRole.id == 'redusurper') {
+                permanentPublicRevealBtn.innerHTML = "Reveal & Usurp"
+            }
         }
         else if(msg.action == 'setupround') {
             for(var i = 0; i < game.numPlayers; i++) {

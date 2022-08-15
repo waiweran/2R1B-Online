@@ -131,7 +131,7 @@ def handle_game_enter(json):
     socketio.emit('game enter', {
         'id': game_entry.id,
         'numPlayers': game_obj.num_players,
-        'myRole': sender.role.source,
+        'myRole': {'id': sender.role.id, 'source': sender.role.source},
         'myConditions': list(sender.conditions),
         'players': players,
         'round': len(game_obj.rounds) - game_obj.round,
@@ -183,7 +183,7 @@ def handle_game_reenter(json):
         socketio.emit('game rejoin', {
             'id': game_entry.id,
             'numPlayers': game_obj.num_players,
-            'myRole': sender.role.source,
+            'myRole': {'id': sender.role.id, 'source': sender.role.source},
             'myConditions': list(sender.conditions),
             'players': players,
             'round': len(game_obj.rounds) - game_obj.round,
@@ -334,12 +334,40 @@ def process_event(json, game_entry, game_obj, sender):
     elif json['action'] == 'permanentpublicreveal':
         if 'shy' not in sender.conditions and 'coy' not in sender.conditions and \
                 'savvy' not in sender.conditions and 'paranoid' not in sender.conditions:
+
+            # Usurper permanent reveal action
+            if sender.role.id in ('blueusurper', 'redusurper') and \
+                    not sender.revealed and not game_obj.usurped[sender.room]:
+                game_obj.leaders[sender.room] = sender.num
+                game_obj.usurped[sender.room] = True
+                sender.votes = 0
+                for player in game_obj.players:
+                    if sender.num in player.my_votes:
+                        player.my_votes.remove(sender.num)
+                votes = list()
+                my_votes = list()
+                for player in game_obj.players:
+                    if player.room == sender.room:
+                        votes.append(player.votes)
+                        my_votes.append(list(player.my_votes))
+                    else:
+                        votes.append(0)
+                        my_votes.append([])
+                game_obj.actions.append(Action('room', {
+                    'action': 'leaderupdate',
+                    'leader': game_obj.leaders[sender.room],
+                    'votes': votes,
+                    'myVotes': my_votes,
+                }))
+
+            # Permanently reveal player
             game_obj.actions.extend(sender.mark_permanent_public_reveal())
             game_obj.actions.append(Action('room', {
                 'action': 'permanentpublicreveal',
                 'target': sender.num,
                 'role': sender.role.source,
             }))
+
 
     elif json['action'] == 'share':
         target: Player = game_obj.players[json['target']]
@@ -425,6 +453,7 @@ def process_event(json, game_entry, game_obj, sender):
             # Leader hands over power
             elif game_obj.leaders[target.room] == sender.num:
                 game_obj.leaders[target.room] = target.num
+                game_obj.usurped[target.room] = False
                 target.votes = 0
                 for player in game_obj.players:
                     if target.num in player.my_votes:
@@ -437,7 +466,8 @@ def process_event(json, game_entry, game_obj, sender):
                 else:
                     sender.my_votes.add(target.num)
                     target.votes += 1
-                    if target.votes > game_obj.num_players / 4:
+                    if target.votes > game_obj.num_players/4 and not game_obj.usurped[target.room]:
+                        # TODO clean use of num_players for Ambassador from above line
                         game_obj.leaders[target.room] = target.num
                         target.votes = 0
                         for player in game_obj.players:
@@ -485,3 +515,6 @@ def process_event(json, game_entry, game_obj, sender):
         elif json['type'] == 'sniper' and sender.role.id == 'sniper':
             sender.prediction = json['choice']
         socketio.emit('quick event', {'action': 'decision'}, room='room_{}'.format(json['id']))
+
+    elif json['action'] == 'power':
+        pass

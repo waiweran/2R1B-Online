@@ -13,6 +13,8 @@ allCards = [
     {"name1": "Medic", "name3": "Medic", "class": "blueredteam", "num": 2, "id": 27},
     {"name1": "Psychologist", "name3": "Psychologist", "class": "blueredteam", "num": 2, "id": 28},
     {"name1": "Tuesday Knight", "name3": "Dr. Boom", "class": "blueredteam", "num": 2, "id": 39},
+    {"name1": "Invincible", "name3": "Immunologist", "class": "blueredteam", "num": 2, "id": 42},
+    {"name1": "Usurper", "name3": "Usurper", "class": "blueredteam", "num": 2, "id": 43},
     {"name2": 'Gambler', "class": "grayteam", "num": 1, "id": 13},
     {"name2": 'MI6', "class": "grayteam", "num": 1, "id": 4},
     {"name2": 'Nuclear Tyrant', "class": "grayteam", "num": 1, "id": 31},
@@ -197,6 +199,14 @@ roleList = [
     [
         {'id': 'traveler', 'source': '/static/Cards/Traveler.png', 'team': 0},
     ],
+    [
+        {'id': 'invincible', 'source': '/static/Cards/Invincible.png', 'team': 1, 'conditions': ['immune']},
+        {'id': 'immunologist', 'source': '/static/Cards/Immunologist.png', 'team': 2, 'conditions': ['immune']},
+    ],
+    [
+        {'id': 'blueusurper', 'source': '/static/Cards/BlueUsurper.png', 'team': 1},
+        {'id': 'redusurper', 'source': '/static/Cards/RedUsurper.png', 'team': 2},
+    ],
 
 ]
 
@@ -211,6 +221,6 @@ no_bury = {
 
 
 # Not included yet: Agent / Conman / Bouncer, Anarchist / Minion / Mastermind, Ambassador,
-# Clone / Robot, Cupid&Eris / Enforcer, Invincible, Mayor, Security / Usurper.
+# Clone / Robot, Cupid&Eris / Enforcer, Mayor, Security.
 
 # Not useful to include: Paparazzo
