@@ -36,6 +36,7 @@
 	<div id="gamebox">
 		<img id="expandelement">
 		<img id="mycard">
+		<img id="myzombie" src="/static/Cards/ZombieOverlay.png">
 		<div id="cardbuttons">
 			<button id="publicreveal">Public Reveal</button>
 			<button id="permanentpublicreveal">Permanent Reveal</button>
@@ -64,7 +65,10 @@
 		<div class="overlay" id="sharing">
 			<h1 id="sharetitle"></h1>
 			<h2 id="sharename"></h2>
-			<img id="sharecard">
+			<div id="cardpictures">
+				<img id="sharecard">
+				<img id="zombieoverlay">
+			</div>
 			<br>
 			<button id="shareclose">Close</button>
 		</div>
@@ -271,7 +275,7 @@
   		font-size: 40px;
   		font-family: "Lucida Console" "monospace";
 	}
-	#mycard {
+	#mycard, #myzombie {
 		position: fixed;
 		width: 20%;
   		top: 95%;
@@ -400,12 +404,11 @@
 	#room2, #victoryroom2 {
 		left: 75%;
 	}
-	#sharecolor {
-		width: 300px;
-		height: 600px;
-	}
-	#sharecard {
+	#sharecard, #zombieoverlay {
+		position: absolute;
+		transform: translate(-50%);
 		border-radius: 10px;
 	}
+
 </style>
 </html>

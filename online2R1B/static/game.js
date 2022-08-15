@@ -33,6 +33,8 @@ var allCards = [
     {"name2": 'Victim', "class": "grayteam", "num": 1, "id": 22},
     {"name2": 'Rival', "class": "grayteam", "num": 1, "id": 29},
     {"name2": 'Survivor', "class": "grayteam", "num": 1, "id": 30},
+    {"name2": 'Agoraphobe', "class": "grayteam", "num": 1, "id": 40},
+    {"name2": 'Traveler', "class": "grayteam", "num": 1, "id": 41},
     {"name1": "President's Daughter", "name3": "Martyr", "class": "blueredteam", "num": 2, "bury": true, "id": 32},
     {"name1": "Nurse", "name3": "Tinkerer", "class": "blueredteam", "num": 2, "bury": true, "id": 33},
     {"name2": "Private Eye", "class": "grayteam", "num": 1, "bury": true, "id": 34},
@@ -603,6 +605,12 @@ function initialize(game, myPlayerNum, rejoin) {
                 player.privateRevealBtn.disabled = true;
             }
         }
+        if(conditions.includes("zombie")) {
+            document.getElementById('myzombie').style.display = "";
+        }
+        else {
+            document.getElementById('myzombie').style.display = "none";
+        }
         var condstr = ""
         if(conditions.length == 0) {
             condstr = "No Conditions"
@@ -849,22 +857,31 @@ function initialize(game, myPlayerNum, rejoin) {
         }
     }
 
-    function teamShow(player, team, title) {
+    function teamShow(player, team, title, zombie) {
         if(currentlyShowing) {
-            showQueue.push({"player": player, "team": team, "title": title})
+            showQueue.push({"player": player, "team": team, "title": title, "zombie": zombie})
         }
         else {
             currentlyShowing = true
             document.getElementById("sharetitle").innerHTML = title;
             document.getElementById("sharename").innerHTML = player.name;
             var shareCard = document.getElementById("sharecard");
+            var zombieOverlay = document.getElementById("zombieoverlay");
+            if(zombie) {
+                zombieOverlay.src = "/static/Teams/ZombieOverlay.png";
+            }
+            else {
+                zombieOverlay.src = "";
+            }
             if(conditions.includes('blind')) {
                 shareCard.src = "";
             }
             else {
-                shareCard.src = team;                
+                shareCard.src = team;
             }
             shareCard.style.height = "14%";
+            zombieOverlay.style.height = "14%";
+            document.getElementById("cardpictures").style.height = "14%";
             var shareBox = document.getElementById("sharing");
             var fadeBox = document.getElementById('fade');
             document.getElementById("shareclose").onclick = function(e) {
@@ -874,10 +891,10 @@ function initialize(game, myPlayerNum, rejoin) {
                 if(showQueue.length > 0) {
                     var info = showQueue.shift()
                     if(info.team != undefined) {
-                        teamShow(info.player, info.team, info.title);
+                        teamShow(info.player, info.team, info.title ,info.zombie);
                     }
                     else {
-                        cardShow(info.player, info.source, info.title);
+                        cardShow(info.player, info.source, info.title, info.zombie);
                     }
                 }
             }
@@ -886,15 +903,22 @@ function initialize(game, myPlayerNum, rejoin) {
         }
     }
 
-    function cardShow(player, source, title) {
+    function cardShow(player, source, title, zombie) {
         if(currentlyShowing) {
-            showQueue.push({"player": player, "source": source, "title": title})
+            showQueue.push({"player": player, "source": source, "title": title, "zombie": zombie})
         }
         else {
             currentlyShowing = true
             document.getElementById("sharetitle").innerHTML = title;
             document.getElementById("sharename").innerHTML = player.name;
             var shareCard = document.getElementById("sharecard");
+            var zombieOverlay = document.getElementById("zombieoverlay");
+            if(zombie) {
+                zombieOverlay.src = "/static/Cards/ZombieOverlay.png";
+            }
+            else {
+                zombieOverlay.src = "";
+            }
             if(conditions.includes('blind')) {
                 shareCard.src = "";
             }
@@ -902,6 +926,8 @@ function initialize(game, myPlayerNum, rejoin) {
                 shareCard.src = source;
             }
             shareCard.style.height = "60%";
+            zombieOverlay.style.height = "60%";
+            document.getElementById("cardpictures").style.height = "60%";
             var shareBox = document.getElementById("sharing");
             var fadeBox = document.getElementById('fade');
             document.getElementById("shareclose").onclick = function(e) {
@@ -911,10 +937,10 @@ function initialize(game, myPlayerNum, rejoin) {
                 if(showQueue.length > 0) {
                     var info = showQueue.shift()
                     if(info.team != undefined) {
-                        teamShow(info.player, info.team, info.title);
+                        teamShow(info.player, info.team, info.title, info.zombie);
                     }
                     else {
-                        cardShow(info.player, info.source, info.title);
+                        cardShow(info.player, info.source, info.title, info.zombie);
                     }
                 }
             }
@@ -1106,30 +1132,30 @@ function initialize(game, myPlayerNum, rejoin) {
         }
         else if(msg.action == 'privatereveal') {
             if(msg.type == 'card') {
-                cardShow(players[msg.target], msg.role, 'Private Reveal');                
+                cardShow(players[msg.target], msg.role, 'Private Reveal', false);
             }
             else {
-                teamShow(players[msg.target], msg.team, 'Private Reveal');
+                teamShow(players[msg.target], msg.team, 'Private Reveal', false);
             }
         }
         else if(msg.action == 'publicreveal') {
             if(msg.type == 'card') {
-                cardShow(players[msg.target], msg.role, 'Public Reveal');                
+                cardShow(players[msg.target], msg.role, 'Public Reveal', false);
             }
             else {
-                teamShow(players[msg.target], msg.team, 'Public Reveal');
+                teamShow(players[msg.target], msg.team, 'Public Reveal', false);
             }
         }
         else if(msg.action == 'permanentpublicreveal') {
             players[msg.target].role = msg.role;
-            cardShow(players[msg.target], msg.role, 'Permanent Reveal');
+            cardShow(players[msg.target], msg.role, 'Permanent Reveal', false);
             updateRoles();
         }
         else if(msg.action == 'colorshare') {
-            teamShow(players[msg.target], msg.team, 'Color Share');
+            teamShow(players[msg.target], msg.team, 'Color Share', msg.zombie);
         }
         else if(msg.action == 'cardshare') {
-            cardShow(players[msg.target], msg.role, 'Card Share');
+            cardShow(players[msg.target], msg.role, 'Card Share', msg.zombie);
         }
         else if(msg.action == 'leaderupdate') {
             leader = msg.leader;

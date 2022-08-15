@@ -418,6 +418,12 @@ class Game:
                         break
                 winners.append(shot == player.num)
 
+            elif player.role.id == 'agoraphobe':
+                winners.append(player.moves == 0)
+
+            elif player.role.id == 'traveler':
+                winners.append(player.moves > self.round/2)
+
             # Add gray card win conditions here
 
             # Unknown cards (auto-lose)
@@ -447,6 +453,7 @@ class Player:
     partner: Optional[int]
     leprechaun: bool
     revealed: bool
+    moves: int
 
     def __init__(self, name, num, role, room):
         self.name = name
@@ -464,6 +471,7 @@ class Player:
         self.partner = None
         self.leprechaun = (role.id == 'leprechaun')
         self.revealed = False
+        self.moves = 0
 
     def mark_card_share(self, player: 'Player') -> List['Action']:
         actions = list()
@@ -580,6 +588,9 @@ class Player:
     def mark_permanent_public_reveal(self) -> List['Action']:
         self.revealed = True
         return []
+
+    def mark_hostage_move(self):
+        self.moves += 1
 
 
 def deal_roles(num_players: int, choices: List[int]) -> Tuple[List['Role'], List[int], dict]:

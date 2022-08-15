@@ -356,11 +356,13 @@ def process_event(json, game_entry, game_obj, sender):
                     'action': 'colorshare',
                     'target': sender.num,
                     'team': sender.role.team_source,
+                    'zombie': 'zombie' in sender.conditions,
                 }))
                 game_obj.actions.append(Action(sender.num, {
                     'action': 'colorshare',
                     'target': target.num,
                     'team': target.role.team_source,
+                    'zombie': 'zombie' in target.conditions,
                 }))
                 game_obj.mark_color_share(sender, target)
             else:
@@ -379,11 +381,13 @@ def process_event(json, game_entry, game_obj, sender):
                     'action': 'cardshare',
                     'target': sender.num,
                     'role': sender.role.source,
+                    'zombie': 'zombie' in sender.conditions,
                 }))
                 game_obj.actions.append(Action(sender.num, {
                     'action': 'cardshare',
                     'target': target.num,
                     'role': target.role.source,
+                    'zombie': 'zombie' in target.conditions,
                 }))
                 game_obj.mark_card_share(sender, target)
             else:
@@ -468,6 +472,7 @@ def process_event(json, game_entry, game_obj, sender):
                                 game_obj.players[i].room = 0
                             else:
                                 game_obj.players[i].room = 1
+                            game_obj.players[i].mark_hostage_move()
                 game_obj.rooms_sending_hostages.clear()
                 game_obj.end_round()
                 game_obj.setup_round()

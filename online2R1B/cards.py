@@ -29,6 +29,8 @@ allCards = [
     {"name2": 'Victim', "class": "grayteam", "num": 1, "id": 22},
     {"name2": 'Rival', "class": "grayteam", "num": 1, "id": 29},
     {"name2": 'Survivor', "class": "grayteam", "num": 1, "id": 30},
+    {"name2": 'Agoraphobe', "class": "grayteam", "num": 1, "id": 40},
+    {"name2": 'Traveler', "class": "grayteam", "num": 1, "id": 41},
     {"name1": "President's Daughter", "name3": "Martyr", "class": "blueredteam", "num": 2, "bury": True, "id": 32},
     {"name1": "Nurse", "name3": "Tinkerer", "class": "blueredteam", "num": 2, "bury": True, "id": 33},
     {"name2": "Private Eye", "class": "grayteam", "num": 1, "bury": True, "id": 34},
@@ -189,6 +191,12 @@ roleList = [
         {'id': 'tuesdayknight', 'source': '/static/Cards/TuesdayKnight.png', 'team': 1},
         {'id': 'drboom', 'source': '/static/Cards/DrBoom.png', 'team': 2},
     ],
+    [
+        {'id': 'agoraphobe', 'source': '/static/Cards/Agoraphobe.png', 'team': 0},
+    ],
+    [
+        {'id': 'traveler', 'source': '/static/Cards/Traveler.png', 'team': 0},
+    ],
 
 ]
 
@@ -202,8 +210,7 @@ no_bury = {
 }
 
 
-# Not included yet: Agent, Agoraphobe, Anarchist, Ambassador, Bouncer, Clone, Conman, Cupid/Eris,
-# Enforcer, Invincible, Mastermind, Mayor, Minion, Robot, Security,
-# Traveler, Usurper.
+# Not included yet: Agent / Conman / Bouncer, Anarchist / Minion / Mastermind, Ambassador,
+# Clone / Robot, Cupid&Eris / Enforcer, Invincible, Mayor, Security / Usurper.
 
 # Not useful to include: Paparazzo
