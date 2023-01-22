@@ -24,7 +24,7 @@ def handle_force_start(json):
     game_entry.object = pickle.dumps(game_obj)
     db.session.commit()
     more = game_obj.next_player < len(game_obj.players)
-    socketio.emit('force start', {'id': game_entry.id, 'num': next_player, 'more': more}, room=code)
+    socketio.emit('force start', {'id': game_entry.id, 'num': next_player, 'more': more}, to=code)
     if not more:
         game_entry.code = None
         for p_entry in game_entry.players:
@@ -42,7 +42,7 @@ def handle_player_appear(json):
     socketio.emit('game info', {
         'game_id': game_entry.id,
         'players': player_info,
-    }, room=request.sid)
+    }, to=request.sid)
 
 
 @socketio.on('disconnect')
@@ -64,7 +64,7 @@ def handle_disconnect():
             'action': 'updatelist',
             'players': player_info,
             'start': all_ready
-        }, room=game_entry.code)
+        }, to=game_entry.code)
         if all_ready:
             role_choices = pickle.loads(game_entry.setup)
             game_entry.object = pickle.dumps(Game(player_names, role_choices))
@@ -80,7 +80,7 @@ def handle_player_update(json):
         player_entry = models.Player(sid=request.sid, name=json['name'], game_id=json['id'])
         db.session.add(player_entry)
         db.session.commit()
-        socketio.emit('player update', {'action': 'join', 'player_id': request.sid}, room=request.sid)
+        socketio.emit('player update', {'action': 'join', 'player_id': request.sid}, to=request.sid)
     elif json['action'] == 'ready':
         player_entry = models.Player.query.get(json['sender'])
         player_entry.ready = json['status'] == 1
@@ -102,7 +102,7 @@ def handle_player_update(json):
         'action': 'updatelist',
         'players': player_info,
         'start': all_ready
-    }, room=json['code'])
+    }, to=json['code'])
     if all_ready:
         role_choices = pickle.loads(game_entry.setup)
         game_entry.object = pickle.dumps(Game(player_names, role_choices))
@@ -137,7 +137,7 @@ def handle_game_enter(json):
         'round': len(game_obj.rounds) - game_obj.round,
         'time': game_obj.rounds[game_obj.round]['time'],
         'numHostages': game_obj.rounds[game_obj.round]['hostages'],
-    }, room=request.sid)
+    }, to=request.sid)
 
 
 @socketio.on('game reenter')
@@ -196,18 +196,18 @@ def handle_game_reenter(json):
             'myVotes': list(sender.my_votes),
             'myShareCount': len(sender.shares),
             'currentAction': current_action,
-        }, room=sender.sid)
+        }, to=sender.sid)
 
 
 @socketio.on('time check')
 def handle_time_check(json):
     json['serverTime'] = int(round(time.time() * 1000))
-    socketio.emit('time check', json, room=request.sid)
+    socketio.emit('time check', json, to=request.sid)
 
 
 @socketio.on('quick event')
 def handle_quick_event(json):
-    socketio.emit('quick event', json, room='room_{}_{}'.format(json['id'], json['room']))
+    socketio.emit('quick event', json, to='room_{}_{}'.format(json['id'], json['room']))
 
 
 @socketio.on('game event')
@@ -253,7 +253,7 @@ def handle_game_event(json):
             index += 1
         for i in range(len(game_obj.players)):
             if player_updates[i]:
-                socketio.emit('event list', player_updates[i], room=game_obj.players[i].sid)
+                socketio.emit('event list', player_updates[i], to=game_obj.players[i].sid)
 
         if index >= len(game_obj.actions):
             game_obj.actions.clear()
@@ -278,7 +278,7 @@ def process_event(json, game_entry, game_obj, sender):
             socketio.emit('event response', {
                 'action': 'startround',
                 'startTime': game_obj.start_time,
-            }, room='room_{}'.format(json['id']))
+            }, to='room_{}'.format(json['id']))
 
     elif json['action'] == 'privatereveal':
         if 'shy' not in sender.conditions and 'coy' not in sender.conditions and \
@@ -367,7 +367,6 @@ def process_event(json, game_entry, game_obj, sender):
                 'target': sender.num,
                 'role': sender.role.source,
             }))
-
 
     elif json['action'] == 'share':
         target: Player = game_obj.players[json['target']]
@@ -514,7 +513,7 @@ def process_event(json, game_entry, game_obj, sender):
             sender.prediction = json['choice']
         elif json['type'] == 'sniper' and sender.role.id == 'sniper':
             sender.prediction = json['choice']
-        socketio.emit('quick event', {'action': 'decision'}, room='room_{}'.format(json['id']))
+        socketio.emit('quick event', {'action': 'decision'}, to='room_{}'.format(json['id']))
 
     elif json['action'] == 'power':
         pass
