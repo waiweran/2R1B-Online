@@ -15,6 +15,8 @@ allCards = [
     {"name1": "Tuesday Knight", "name3": "Dr. Boom", "class": "blueredteam", "num": 2, "id": 39},
     {"name1": "Invincible", "name3": "Immunologist", "class": "blueredteam", "num": 2, "id": 42},
     {"name1": "Usurper", "name3": "Usurper", "class": "blueredteam", "num": 2, "id": 43},
+    {"name1": "Agent", "name3": "Agent", "class": "blueredteam", "num": 2, "id": 44},
+    {"name1": "Conman", "name3": "Conman", "class": "blueredteam", "num": 2, "id": 45},
     {"name2": 'Gambler', "class": "grayteam", "num": 1, "id": 13},
     {"name2": 'MI6', "class": "grayteam", "num": 1, "id": 4},
     {"name2": 'Nuclear Tyrant', "class": "grayteam", "num": 1, "id": 31},
@@ -33,6 +35,9 @@ allCards = [
     {"name2": 'Survivor', "class": "grayteam", "num": 1, "id": 30},
     {"name2": 'Agoraphobe', "class": "grayteam", "num": 1, "id": 40},
     {"name2": 'Traveler', "class": "grayteam", "num": 1, "id": 41},
+    {"name2": 'Anarchist', "class": "grayteam", "num": 1, "id": 46},
+    {"name2": 'Minion', "class": "grayteam", "num": 1, "id": 47},
+    {"name2": 'Mastermind', "class": "grayteam", "num": 1, "id": 48},
     {"name1": "President's Daughter", "name3": "Martyr", "class": "blueredteam", "num": 2, "bury": True, "id": 32},
     {"name1": "Nurse", "name3": "Tinkerer", "class": "blueredteam", "num": 2, "bury": True, "id": 33},
     {"name2": "Private Eye", "class": "grayteam", "num": 1, "bury": True, "id": 34},
@@ -207,6 +212,23 @@ roleList = [
         {'id': 'blueusurper', 'source': '/static/Cards/BlueUsurper.png', 'team': 1},
         {'id': 'redusurper', 'source': '/static/Cards/RedUsurper.png', 'team': 2},
     ],
+    [
+        {'id': 'blueagent', 'source': '/static/Cards/BlueAgent.png', 'team': 1},
+        {'id': 'redagent', 'source': '/static/Cards/RedAgent.png', 'team': 2},
+    ],
+    [
+        {'id': 'blueconman', 'source': '/static/Cards/BlueConman.png', 'team': 1},
+        {'id': 'redconman', 'source': '/static/Cards/RedConman.png', 'team': 2},
+    ],
+    [
+        {'id': 'anarchist', 'source': '/static/Cards/Anarchist.png', 'team': 0},
+    ],
+    [
+        {'id': 'minion', 'source': '/static/Cards/Minion.png', 'team': 0},
+    ],
+    [
+        {'id': 'mastermind', 'source': '/static/Cards/Mastermind.png', 'team': 0},
+    ],
 
 ]
 
@@ -220,7 +242,6 @@ no_bury = {
 }
 
 
-# Not included yet: Agent / Conman / Bouncer, Anarchist / Minion / Mastermind, Ambassador,
-# Clone / Robot, Cupid&Eris / Enforcer, Mayor, Security.
+# Not included yet: Bouncer, Ambassador, Clone / Robot, Cupid&Eris / Enforcer, Mayor, Security.
 
 # Not useful to include: Paparazzo

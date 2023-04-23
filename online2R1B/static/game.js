@@ -19,6 +19,8 @@ var allCards = [
     {"name1": "Tuesday Knight", "name3": "Dr. Boom", "class": "blueredteam", "num": 2, "id": 39},
     {"name1": "Invincible", "name3": "Immunologist", "class": "blueredteam", "num": 2, "id": 42},
     {"name1": "Usurper", "name3": "Usurper", "class": "blueredteam", "num": 2, "id": 43},
+    {"name1": "Agent", "name3": "Agent", "class": "blueredteam", "num": 2, "id": 44},
+    {"name1": "Conman", "name3": "Conman", "class": "blueredteam", "num": 2, "id": 45},
     {"name2": 'Gambler', "class": "grayteam", "num": 1, "id": 13},
     {"name2": 'MI6', "class": "grayteam", "num": 1, "id": 4},
     {"name2": 'Nuclear Tyrant', "class": "grayteam", "num": 1, "id": 31},
@@ -37,6 +39,9 @@ var allCards = [
     {"name2": 'Survivor', "class": "grayteam", "num": 1, "id": 30},
     {"name2": 'Agoraphobe', "class": "grayteam", "num": 1, "id": 40},
     {"name2": 'Traveler', "class": "grayteam", "num": 1, "id": 41},
+    {"name2": 'Anarchist', "class": "grayteam", "num": 1, "id": 46},
+    {"name2": 'Minion', "class": "grayteam", "num": 1, "id": 47},
+    {"name2": 'Mastermind', "class": "grayteam", "num": 1, "id": 48},
     {"name1": "President's Daughter", "name3": "Martyr", "class": "blueredteam", "num": 2, "bury": true, "id": 32},
     {"name1": "Nurse", "name3": "Tinkerer", "class": "blueredteam", "num": 2, "bury": true, "id": 33},
     {"name2": "Private Eye", "class": "grayteam", "num": 1, "bury": true, "id": 34},
@@ -385,6 +390,7 @@ function initialize(game, myPlayerNum, rejoin) {
     document.getElementById('sharing').style.display = "none";
     document.getElementById('revealing').style.display = "none";
     document.getElementById('victory').style.display = "none";
+    document.getElementById("sharepower").style.display = "none";
 
     // Setup my card
     var myCard = document.getElementById('mycard');
@@ -428,9 +434,6 @@ function initialize(game, myPlayerNum, rejoin) {
     }
     publicRevealBtn.style.display = "none";
     permanentPublicRevealBtn.style.display = "none";
-    if(game.myRole.id == 'blueusurper' || game.myRole.id == 'redusurper') {
-        permanentPublicRevealBtn.innerHTML = "Reveal & Usurp"
-    }
 
     // General Setup
     var round = {"num": game.round, "time": game.time, "hostages": game.numHostages}
@@ -466,7 +469,7 @@ function initialize(game, myPlayerNum, rejoin) {
             myPlayer = player;
         }
     }
-    updateConditions();
+    updatePlayerInfo();
     setupRound();
 
     // Setup current game state if rejoining
@@ -526,6 +529,18 @@ function initialize(game, myPlayerNum, rejoin) {
             expandTarget = null;
         }
         player.element.appendChild(player.permanentRole)
+
+        // Character-specific powers
+        player.powerBtn = document.createElement('BUTTON');
+        player.powerBtn.innerHTML = "Use Power";
+        player.powerBtn.onclick = function(e) {
+            gameUpdate({"action": "power", "target": i});
+        };
+        player.element.appendChild(player.powerBtn);
+        player.powerBtn.disabled = true;
+        player.powerBtn.style.display = "none"
+
+        // Election button
         player.nominateBtn = document.createElement('BUTTON');
         player.votes = 0;
         player.nominateBtn.innerHTML = "Nominate Leader";
@@ -533,6 +548,8 @@ function initialize(game, myPlayerNum, rejoin) {
             gameUpdate({"action": "nominate", "target": i});
         };
         player.element.appendChild(player.nominateBtn);
+
+        // Sharing and revealing buttons
         player.privateRevealBtn = document.createElement('BUTTON');
         player.privateRevealBtn.innerHTML = "Private Reveal";
         player.privateRevealBtn.onclick = function(e) {
@@ -562,7 +579,6 @@ function initialize(game, myPlayerNum, rejoin) {
             gameUpdate({"action": "share", "type": "color", "target": i});
         };
         player.element.appendChild(player.colorShareBtn);
-
         player.cardShareBtn = document.createElement('BUTTON');
         player.cardShareBtn.innerHTML = "Card Share";
         player.cardShareBtn.onclick = function(e) {
@@ -576,15 +592,41 @@ function initialize(game, myPlayerNum, rejoin) {
         return player;
     }
 
-    function updateConditions() {
+    function updateRoles() {
+        for(var player of players) {
+            if(player.role != undefined && !conditions.includes('blind')) {
+                player.permanentRole.src = player.role;                
+            }
+        }
+    }
+
+    function updatePlayerInfo() {
+
+        // Room size differential for Bouncer
+        var roomSize = 0;
+        for(var player of players) {
+            if(player.room == myPlayer.room) {
+                roomSize += 1;
+            }
+            else {
+                roomSize -= 1;
+            }
+        }
+
+        // Update button accessibility
         publicRevealBtn.disabled = false;
         permanentPublicRevealBtn.disabled = false;
-        if(conditions.includes("coy" || conditions.includes("shy") || 
+        permanentPublicRevealBtn.innerHTML = "Permanent Reveal";
+        if(conditions.includes("coy" || conditions.includes("shy") ||
                 conditions.includes("savvy") || conditions.includes("paranoid"))) {
             publicRevealBtn.disabled = true;
             permanentPublicRevealBtn.disabled = true;
         }
+        if(game.myRole.id == 'blueusurper' || game.myRole.id == 'redusurper') {
+            permanentPublicRevealBtn.innerHTML = "Reveal & Usurp"
+        }
         for(var player of players) {
+            player.powerBtn.style.display = "none";
             player.colorShareBtn.disabled = false;
             player.cardShareBtn.disabled = false;
             player.privateRevealBtn.disabled = false;
@@ -604,12 +646,30 @@ function initialize(game, myPlayerNum, rejoin) {
             if(conditions.includes("paranoid") && numShares >= 1) {
                 player.cardShareBtn.disabled = true;
             }
+            if(game.myRole.id == 'blueagent' || game.myRole.id == 'redagent') {
+                player.powerBtn.innerHTML = "Agent Power";
+                player.powerBtn.style.display = "";
+                player.powerBtn.disabled = false;
+            }
+            else if(game.myRole.id == 'bluebouncer' || game.myRole.id == 'redbouncer') {
+                player.powerBtn.innerHTML = "Bouncer Power";
+                player.powerBtn.style.display = "";
+                if(roomSize > 0) {
+                    player.powerBtn.disabled = false;
+                }
+                else {
+                    player.powerBtn.disabled = true;
+                }
+            }
             if(myPlayerNum == player.num) {
+                player.powerBtn.disabled = true;
                 player.cardShareBtn.disabled = true;
                 player.colorShareBtn.disabled = true;
                 player.privateRevealBtn.disabled = true;
             }
         }
+
+        // Update Conditions
         if(conditions.includes("zombie")) {
             document.getElementById('myzombie').style.display = "";
         }
@@ -683,14 +743,6 @@ function initialize(game, myPlayerNum, rejoin) {
             }
         }
         document.getElementById('myconditions').innerHTML = condstr;
-    }
-
-    function updateRoles() {
-        for(var player of players) {
-            if(player.role != undefined && !conditions.includes('blind')) {
-                player.permanentRole.src = player.role;                
-            }
-        }
     }
 
     function setupRound() {
@@ -876,6 +928,9 @@ function initialize(game, myPlayerNum, rejoin) {
         }
         else {
             currentlyShowing = true
+            var sharePowerBtn = document.getElementById("sharepower");
+            sharePowerBtn.style.display = "none";
+            sharePowerBtn.onclick = function(e){};
             document.getElementById("sharetitle").innerHTML = title;
             document.getElementById("sharename").innerHTML = player.name;
             var shareCard = document.getElementById("sharecard");
@@ -897,6 +952,24 @@ function initialize(game, myPlayerNum, rejoin) {
             document.getElementById("cardpictures").style.height = "14%";
             var shareBox = document.getElementById("sharing");
             var fadeBox = document.getElementById('fade');
+            if(game.myRole.id == 'blueconman' || game.myRole.id == 'redconman') {
+                sharePowerBtn.style.display = "";
+                sharePowerBtn.onclick = function(e) {
+                    gameUpdate({"action": "power", "target": player.num});
+                }
+                shareBox.style.display = "none";
+                fadeBox.style.display = "none";
+                currentlyShowing = false;
+                if(showQueue.length > 0) {
+                    var info = showQueue.shift()
+                    if(info.team != undefined) {
+                        teamShow(info.player, info.team, info.title ,info.zombie);
+                    }
+                    else {
+                        cardShow(info.player, info.source, info.title, info.zombie);
+                    }
+                }
+            }
             document.getElementById("shareclose").onclick = function(e) {
                 shareBox.style.display = "none";
                 fadeBox.style.display = "none";
@@ -922,6 +995,9 @@ function initialize(game, myPlayerNum, rejoin) {
         }
         else {
             currentlyShowing = true
+            var sharePowerBtn = document.getElementById("sharepower");
+            sharePowerBtn.style.display = "none";
+            sharePowerBtn.onclick = function(e){};
             document.getElementById("sharetitle").innerHTML = title;
             document.getElementById("sharename").innerHTML = player.name;
             var shareCard = document.getElementById("sharecard");
@@ -1145,7 +1221,12 @@ function initialize(game, myPlayerNum, rejoin) {
         }
         else if(msg.action == 'privatereveal') {
             if(msg.type == 'card') {
-                cardShow(players[msg.target], msg.role, 'Private Reveal', false);
+                if(msg.alert != null) {
+                    cardShow(players[msg.target], msg.role, msg.alert, false);
+                }
+                else {
+                    cardShow(players[msg.target], msg.role, 'Private Reveal', false);
+                }
             }
             else {
                 teamShow(players[msg.target], msg.team, 'Private Reveal', false);
@@ -1173,7 +1254,12 @@ function initialize(game, myPlayerNum, rejoin) {
             teamShow(players[msg.target], msg.team, 'Color Share', msg.zombie);
         }
         else if(msg.action == 'cardshare') {
-            cardShow(players[msg.target], msg.role, 'Card Share', msg.zombie);
+            if(msg.alert != null) {
+                cardShow(players[msg.target], msg.role, msg.alert, msg.zombie);
+            }
+            else {
+                cardShow(players[msg.target], msg.role, 'Card Share', msg.zombie);
+            }
         }
         else if(msg.action == 'leaderupdate') {
             leader = msg.leader;
@@ -1189,11 +1275,9 @@ function initialize(game, myPlayerNum, rejoin) {
             game.myRole = msg.role;
             conditions = msg.conditions;
             numShares = msg.shares;
-            updateConditions();
-            if(game.myRole.id == 'blueusurper' || game.myRole.id == 'redusurper') {
-                permanentPublicRevealBtn.innerHTML = "Reveal & Usurp"
-            }
+            updatePlayerInfo();
         }
+
         else if(msg.action == 'setupround') {
             for(var i = 0; i < game.numPlayers; i++) {
                 players[i].room = msg.rooms[i];

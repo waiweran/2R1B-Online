@@ -10,6 +10,7 @@ class Game:
     settings: dict
     rounds: List[dict]
     leaders: List[Optional[int]]
+    leader_log: List[Tuple[List[int], List[int]]]
     usurped: List[bool]
     round: int
     start_time: Optional[int]
@@ -18,12 +19,13 @@ class Game:
     actions: List['Action']
     current_action: Optional['Action']
 
-    def __init__(self, player_names, choices):
+    def __init__(self, player_names, choices, shuffle=True):
         self.players = []
         self.num_players = len(player_names)
-        self.roles, rooms, self.settings = deal_roles(self.num_players, choices)
+        self.roles, rooms, self.settings = deal_roles(self.num_players, choices, shuffle)
         self.rounds = []
         self.leaders = [None, None]
+        self.leader_log = [(list(), list())]
         self.usurped = [False, False]
         self.round = 0
         self.start_time = None
@@ -49,6 +51,7 @@ class Game:
                 break
 
     def setup_round(self):
+
         # Update Drunk
         if self.round == len(self.rounds) - 1 and self.settings['drunk']:
             for player in self.players:
@@ -103,9 +106,12 @@ class Game:
 
         # New Round Start
         else:
+            self.leader_log.append((list(), list()))
             rooms = list()
             for player in self.players:
                 rooms.append(player.room)
+                player.room_log.append(player.room)
+                player.agent_share = True
             for player in self.players:
                 roles = list()
                 for sub_player in self.players:
@@ -187,6 +193,10 @@ class Game:
                     'action': 'hiderole',
                     'target': player2.num,
                 }))
+
+    def set_leader(self, room, player_num):
+        self.leaders[room] = player_num
+        self.leader_log[self.round][room].append(player_num)
 
     def end_round(self):
         self.round += 1
@@ -277,7 +287,7 @@ class Game:
             elif player.role.team == 2:
                 winners.append('fizzled' not in bomber.conditions and 'dead' in president.conditions)
 
-            # Special team win conditions
+            # Zombie win condition (OG Zombie only)
             elif player.role.team == 3:
                 win = True
                 for sub_player in self.players:
@@ -286,6 +296,7 @@ class Game:
                         break
                 winners.append(win)
 
+            # Leprechaun win condition
             elif player.role.team == 4:
                 winners.append(True)
 
@@ -427,10 +438,42 @@ class Game:
                 winners.append(shot == player.num)
 
             elif player.role.id == 'agoraphobe':
-                winners.append(player.moves == 0)
+                winners.append(max(player.room_log) == min(player.room_log))
 
             elif player.role.id == 'traveler':
-                winners.append(player.moves > self.round / 2)
+                prev_room = player.room_log[0]
+                swaps = 0
+                for room_num in player.room_log:
+                    if prev_room != room_num:
+                        swaps += 1
+                    prev_room = room_num
+                winners.append(swaps > self.round / 2)
+
+            elif player.role.id == 'minion':
+                kept_leader = True
+                if len(self.leader_log[0][player.room_log[0]]) > 1:
+                    kept_leader = False
+                for i in range(1, len(self.leader_log)):
+                    if len(self.leader_log[i][player.room_log[i]]) > 0:
+                        kept_leader = False
+                winners.append(kept_leader)
+
+            elif player.role.id == 'anarchist':
+                usurps = 0
+                if len(self.leader_log[0][player.room_log[0]]) > 1:
+                    usurps = 1
+                for i in range(1, len(self.leader_log)):
+                    if len(self.leader_log[i][player.room_log[i]]) > 0:
+                        usurps += 1
+                winners.append(usurps > self.round / 2)
+
+            elif player.role.id == 'mastermind':
+                led_other = False
+                for leader_round in self.leader_log:
+                    if player.num in leader_round[(player.room + 1) % 2]:
+                        led_other = True
+                winners.append(self.leaders[player.room] == player.num and led_other)
+
 
             # Add gray card win conditions here
 
@@ -459,8 +502,9 @@ class Player:
     prediction: Optional[int]
     partner: Optional[int]
     leprechaun: bool
+    agent_share: bool
     revealed: bool
-    moves: int
+    room_log: List[int]
 
     def __init__(self, name, num, role, room):
         self.name = name
@@ -477,8 +521,9 @@ class Player:
         self.prediction = None
         self.partner = None
         self.leprechaun = (role.id == 'leprechaun')
+        self.agent_share = True
         self.revealed = False
-        self.moves = 0
+        self.room_log = [room]
 
     def mark_card_share(self, player: 'Player') -> List['Action']:
         actions = list()
@@ -601,11 +646,8 @@ class Player:
         self.revealed = True
         return []
 
-    def mark_hostage_move(self):
-        self.moves += 1
 
-
-def deal_roles(num_players: int, choices: List[int]) -> Tuple[List['Role'], List[int], dict]:
+def deal_roles(num_players: int, choices: List[int], shuffle: bool) -> Tuple[List['Role'], List[int], dict]:
     num_roles = num_players
     roles = [
         Role(role_id='president', source='/static/Cards/President.png', team=1),
@@ -668,7 +710,8 @@ def deal_roles(num_players: int, choices: List[int]) -> Tuple[List['Role'], List
             role.team_source = team_sources[2]
         else:
             role.team_source = team_sources[role.team]
-    random.shuffle(roles)
+    if shuffle:
+        random.shuffle(roles)
 
     if settings['drunk']:
         for i in range(len(roles)):
@@ -689,7 +732,8 @@ def deal_roles(num_players: int, choices: List[int]) -> Tuple[List['Role'], List
         rooms.append(0)
     while len(rooms) < len(roles):
         rooms.append(1)
-    random.shuffle(rooms)
+    if shuffle:
+        random.shuffle(rooms)
 
     return roles, rooms, settings
 

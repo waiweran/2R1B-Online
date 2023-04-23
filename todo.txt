@@ -1,5 +1,6 @@
 High Priority
 
+Test Agoraphobe, Traveler, Anarchist, Mastermind, Minion win/lose logic
 Include more cards
 Add links to rules, character guide
 

@@ -24,7 +24,8 @@ def play():
         code = session['code']
         game_entry: models.Game = models.Game.query.filter_by(code=code).first()
         if code.isalpha() and len(code) == 4 and game_entry:
-            return render_template('game.html', code=code, roles=pickle.loads(game_entry.setup), game_info=game_entry)
+            return render_template('game.html', code=code, roles=pickle.loads(game_entry.setup), game_info=game_entry,
+                                   cards=json.dumps(cards.allCards))
     return render_template('game.html', rejoin=True)
 
 
