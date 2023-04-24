@@ -10,7 +10,7 @@ class Game:
     settings: dict
     rounds: List[dict]
     leaders: List[Optional[int]]
-    leader_log: List[Tuple[List[int], List[int]]]
+    leader_log: List[Tuple[List[Tuple[int, bool]], List[Tuple[int, bool]]]]
     usurped: List[bool]
     round: int
     start_time: Optional[int]
@@ -51,6 +51,21 @@ class Game:
                 break
 
     def setup_round(self):
+        """
+        Sets up game for rounds after first round
+        Updates the Drunk
+        Asks end-of-game questions
+        Sets up leaders and rooms for following round
+        :return: None
+        """
+
+        # Clean up from previous round
+        self.round += 1
+        self.start_time = None
+        for player in self.players:
+            player.my_votes.clear()
+            player.votes = 0
+        self.usurped = [False, False]
 
         # Update Drunk
         if self.round == len(self.rounds) - 1 and self.settings['drunk']:
@@ -106,7 +121,7 @@ class Game:
 
         # New Round Start
         else:
-            self.leader_log.append((list(), list()))
+            self.leader_log.append(([(self.leaders[0], False)], [(self.leaders[1], False)]))
             rooms = list()
             for player in self.players:
                 rooms.append(player.room)
@@ -130,11 +145,23 @@ class Game:
                 }))
 
     def mark_color_share(self, player1: 'Player', player2: 'Player'):
+        """
+        Records actions involved in color sharing between two players
+        :param player1:
+        :param player2:
+        :return: None
+        """
         self.actions.extend(player1.mark_color_share(player2))
         self.actions.extend(player2.mark_color_share(player1))
         self._check_role_swap(player1, player2)
 
     def mark_card_share(self, player1: 'Player', player2: 'Player'):
+        """
+        Records actions involved in card sharing between two players
+        :param player1:
+        :param player2:
+        :return: None
+        """
         self.actions.extend(player1.mark_card_share(player2))
         self.actions.extend(player2.mark_card_share(player1))
         self._check_role_swap(player1, player2)
@@ -152,6 +179,12 @@ class Game:
             self.end_game(early=True)
 
     def _check_role_swap(self, player1, player2):
+        """
+        Checks if two players' roles swap based on Leprechaun or Hot Potato, and implements swap if needed
+        :param player1:
+        :param player2:
+        :return: None
+        """
         if (player1.role.id == 'hotpotato' or player2.role.id == 'hotpotato' or
                 (player1.role.id == 'leprechaun' and not player2.leprechaun) or
                 (player2.role.id == 'leprechaun' and not player1.leprechaun)) and \
@@ -194,19 +227,24 @@ class Game:
                     'target': player2.num,
                 }))
 
-    def set_leader(self, room, player_num):
+    def set_leader(self, room, player_num, usurped):
+        """
+        Sets the leader of the given room to the given player
+        Records necessary information for win conditions
+        :param room:
+        :param player_num:
+        :param usurped: True if leader was usurped, False otherwise
+        :return: None
+        """
         self.leaders[room] = player_num
-        self.leader_log[self.round][room].append(player_num)
-
-    def end_round(self):
-        self.round += 1
-        self.start_time = None
-        for player in self.players:
-            player.my_votes.clear()
-            player.votes = 0
-        self.usurped = [False, False]
+        self.leader_log[self.round][room].append((player_num, usurped))
 
     def end_game(self, early=False):
+        """
+        Ends game and sends winner information to clients
+        :param early: Indicates whether the game ended early due to Tuesday Knight/Dr. Boom
+        :return: None
+        """
         info = list()
         winners = self.calc_winners(early)
         for player in self.players:
@@ -221,7 +259,12 @@ class Game:
             'info': info,
         }, blocking=True))
 
-    def calc_winners(self, early=False):
+    def calc_winners(self, early=False) -> List[bool]:
+        """
+        Calculates win/loss for each role
+        :param early: Indicates whether the game ended early due to Tuesday Knight/Dr. Boom
+        :return: List of booleans indicating win/loss by player number
+        """
         nt_index = -1
         president = None
         bomber = None
@@ -451,29 +494,28 @@ class Game:
 
             elif player.role.id == 'minion':
                 kept_leader = True
-                if len(self.leader_log[0][player.room_log[0]]) > 1:
-                    kept_leader = False
-                for i in range(1, len(self.leader_log)):
-                    if len(self.leader_log[i][player.room_log[i]]) > 0:
-                        kept_leader = False
+                for i in range(0, len(self.leader_log)):
+                    for leader_entry in self.leader_log[i][player.room_log[i]]:
+                        if leader_entry[1]:
+                            kept_leader = False
                 winners.append(kept_leader)
 
             elif player.role.id == 'anarchist':
                 usurps = 0
-                if len(self.leader_log[0][player.room_log[0]]) > 1:
-                    usurps = 1
-                for i in range(1, len(self.leader_log)):
-                    if len(self.leader_log[i][player.room_log[i]]) > 0:
-                        usurps += 1
+                for i in range(0, len(self.leader_log)):
+                    for leader_entry in self.leader_log[i][player.room_log[i]]:
+                        if leader_entry[1]:
+                            usurps += 1
+                            break
                 winners.append(usurps > self.round / 2)
 
             elif player.role.id == 'mastermind':
                 led_other = False
                 for leader_round in self.leader_log:
-                    if player.num in leader_round[(player.room + 1) % 2]:
-                        led_other = True
+                    for leader_entry in leader_round[(player.room + 1) % 2]:
+                        if player.num == leader_entry[0]:
+                            led_other = True
                 winners.append(self.leaders[player.room] == player.num and led_other)
-
 
             # Add gray card win conditions here
 

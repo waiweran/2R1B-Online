@@ -338,7 +338,7 @@ def process_event(json, game_entry, game_obj: Game, sender):
             # Usurper permanent reveal action
             if sender.role.id in ('blueusurper', 'redusurper') and \
                     not sender.revealed and not game_obj.usurped[sender.room]:
-                game_obj.set_leader(sender.room, sender.num)
+                game_obj.set_leader(sender.room, sender.num, True)
                 game_obj.usurped[sender.room] = True
                 sender.votes = 0
                 for player in game_obj.players:
@@ -448,10 +448,10 @@ def process_event(json, game_entry, game_obj: Game, sender):
         if sender.room == target.room:
             # Nominate first leader
             if game_obj.leaders[target.room] is None:
-                game_obj.set_leader(target.room, target.num)
+                game_obj.set_leader(target.room, target.num, False)
             # Leader hands over power
             elif game_obj.leaders[target.room] == sender.num:
-                game_obj.set_leader(target.room, target.num)
+                game_obj.set_leader(target.room, target.num, False)
                 game_obj.usurped[target.room] = False
                 target.votes = 0
                 for player in game_obj.players:
@@ -467,7 +467,7 @@ def process_event(json, game_entry, game_obj: Game, sender):
                     target.votes += 1
                     if target.votes > game_obj.num_players/4 and not game_obj.usurped[target.room]:
                         # TODO clean use of num_players for Ambassador from above line
-                        game_obj.set_leader(target.room, target.num)
+                        game_obj.set_leader(target.room, target.num, True)
                         target.votes = 0
                         for player in game_obj.players:
                             if target.num in player.my_votes:
@@ -490,7 +490,7 @@ def process_event(json, game_entry, game_obj: Game, sender):
 
     elif json['action'] == 'sendhostages':
         if game_obj.leaders[sender.room] is None:
-            game_obj.set_leader(sender.room, sender.num)
+            game_obj.set_leader(sender.room, sender.num, False)
         if game_obj.leaders[sender.room] == sender.num:
             game_obj.rooms_sending_hostages.append({'room': sender.room, 'hostages': json['hostages']})
             if len(game_obj.rooms_sending_hostages) >= 2:
@@ -502,7 +502,6 @@ def process_event(json, game_entry, game_obj: Game, sender):
                             else:
                                 game_obj.players[i].room = 1
                 game_obj.rooms_sending_hostages.clear()
-                game_obj.end_round()
                 game_obj.setup_round()
 
     elif json['action'] == 'decision':

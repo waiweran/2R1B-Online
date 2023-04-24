@@ -447,24 +447,65 @@ class TestLeadershipCards(unittest.TestCase):
             'action': 'nominate',
             'target': 1,
         }
-        responses.process_event(json, None, game_obj, sender=game_obj.players[0])
+        responses.process_event(json, None, game_obj, sender=game_obj.players[1])
+        json = {
+            'action': 'nominate',
+            'target': 1,
+        }
+        responses.process_event(json, None, game_obj, sender=game_obj.players[3])
+        json = {
+            'action': 'nominate',
+            'target': 1,
+        }
+        responses.process_event(json, None, game_obj, sender=game_obj.players[4])
         json = {
             'action': 'nominate',
             'target': 6,
         }
-        responses.process_event(json, None, game_obj, sender=game_obj.players[5])
+        responses.process_event(json, None, game_obj, sender=game_obj.players[6])
+        json = {
+            'action': 'nominate',
+            'target': 6,
+        }
+        responses.process_event(json, None, game_obj, sender=game_obj.players[8])
+        json = {
+            'action': 'nominate',
+            'target': 6,
+        }
+        responses.process_event(json, None, game_obj, sender=game_obj.players[9])
 
         # Repeat usurp (both)
         json = {
             'action': 'nominate',
             'target': 0,
         }
-        responses.process_event(json, None, game_obj, sender=game_obj.players[1])
+        responses.process_event(json, None, game_obj, sender=game_obj.players[0])
+        json = {
+            'action': 'nominate',
+            'target': 0,
+        }
+        responses.process_event(json, None, game_obj, sender=game_obj.players[3])
+        json = {
+            'action': 'nominate',
+            'target': 0,
+        }
+        responses.process_event(json, None, game_obj, sender=game_obj.players[4])
         json = {
             'action': 'nominate',
             'target': 5,
         }
-        responses.process_event(json, None, game_obj, sender=game_obj.players[6])
+        responses.process_event(json, None, game_obj, sender=game_obj.players[5])
+        json = {
+            'action': 'nominate',
+            'target': 5,
+        }
+        responses.process_event(json, None, game_obj, sender=game_obj.players[8])
+        json = {
+            'action': 'nominate',
+            'target': 5,
+        }
+        responses.process_event(json, None, game_obj, sender=game_obj.players[9])
+
 
         # Trigger Round 2 End
         json = {
@@ -483,7 +524,17 @@ class TestLeadershipCards(unittest.TestCase):
             'action': 'nominate',
             'target': 1,
         }
-        responses.process_event(json, None, game_obj, sender=game_obj.players[0])
+        responses.process_event(json, None, game_obj, sender=game_obj.players[1])
+        json = {
+            'action': 'nominate',
+            'target': 1,
+        }
+        responses.process_event(json, None, game_obj, sender=game_obj.players[2])
+        json = {
+            'action': 'nominate',
+            'target': 1,
+        }
+        responses.process_event(json, None, game_obj, sender=game_obj.players[3])
 
         # Trigger Round 3 End
         json = {
@@ -525,7 +576,17 @@ class TestLeadershipCards(unittest.TestCase):
             'action': 'nominate',
             'target': 1,
         }
-        responses.process_event(json, None, game_obj, sender=game_obj.players[0])
+        responses.process_event(json, None, game_obj, sender=game_obj.players[1])
+        json = {
+            'action': 'nominate',
+            'target': 1,
+        }
+        responses.process_event(json, None, game_obj, sender=game_obj.players[2])
+        json = {
+            'action': 'nominate',
+            'target': 1,
+        }
+        responses.process_event(json, None, game_obj, sender=game_obj.players[3])
 
         # Trigger Round 1 End
         json = {
@@ -539,7 +600,7 @@ class TestLeadershipCards(unittest.TestCase):
         }
         responses.process_event(json, None, game_obj, sender=game_obj.players[5])
 
-        # Usurp Minion 2
+        # Pass leader for Minion 2
         json = {
             'action': 'nominate',
             'target': 0,
@@ -562,8 +623,8 @@ class TestLeadershipCards(unittest.TestCase):
         winners = game_obj.calc_winners()
         self.assertEqual(len(game_obj.players), len(winners))
         self.assertFalse(winners[4])  # Minion 1 (Usurped round 1)
-        self.assertFalse(winners[8])  # Minion 2 (Usurped round 2)
-        self.assertTrue(winners[9])  # Minion 3 (Succeeded)
+        self.assertTrue(winners[8])  # Minion 2 (Passed leader round 2)
+        self.assertTrue(winners[9])  # Minion 3 (No leader change)
 
     def test_mastermind(self):
         players = ['Ike', 'Marth', 'Ness', 'Lucas', 'Samus', 'Link', 'Zelda', 'Shulk', 'Peach', 'Daisy']
