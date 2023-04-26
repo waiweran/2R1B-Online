@@ -194,7 +194,7 @@ def handle_game_reenter(json):
             'leader': game_obj.leaders[sender.room],
             'myShare': {'card': sender.card_share, 'color': sender.color_share},
             'myVotes': list(sender.my_votes),
-            'myShareCount': len(sender.shares),
+            'myShareCount': len(sender.card_shares),
             'currentAction': current_action,
         }, to=sender.sid)
 
@@ -397,7 +397,7 @@ def process_event(json, game_entry, game_obj: Game, sender):
         elif json['type'] == 'card':
             sender.color_share = None
             if 'shy' in sender.conditions or 'coy' in sender.conditions or \
-                    ('paranoid' in sender.conditions and len(sender.shares) > 1) or \
+                    ('paranoid' in sender.conditions and len(sender.card_shares) > 1) or \
                     sender.card_share == target.num:
                 sender.card_share = None
             elif 'foolish' in target.conditions or target.card_share == sender.num:

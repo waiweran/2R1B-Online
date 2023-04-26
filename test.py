@@ -697,3 +697,130 @@ class TestLeadershipCards(unittest.TestCase):
         self.assertFalse(winners[4])  # Mastermind 1 (Led other but not leader at end)
         self.assertFalse(winners[8])  # Mastermind 2 (Leader at end but did not lead other)
         self.assertTrue(winners[9])  # Mastermind 3 (Succeeded)
+
+
+class TestShareCards(unittest.TestCase):
+
+    def test_clone(self):
+        players = ['Ike', 'Marth', 'Ness', 'Lucas', 'Samus', 'Link', 'Zelda', 'Shulk', 'Peach', 'Daisy']
+        role_choices = [49, 49, 49, 0, 49, 4, 50]
+        game_obj = game.Game(players, role_choices, shuffle=False)
+
+        # Clone 1 Bomber Share
+        json = {
+            'action': 'share',
+            'type': 'card',
+            'target': 2,
+        }
+        responses.process_event(json, None, game_obj, sender=game_obj.players[1])
+        json = {
+            'action': 'share',
+            'type': 'card',
+            'target': 1,
+        }
+        responses.process_event(json, None, game_obj, sender=game_obj.players[2])
+
+        # Clone 2 President Share
+        json = {
+            'action': 'share',
+            'type': 'card',
+            'target': 3,
+        }
+        responses.process_event(json, None, game_obj, sender=game_obj.players[0])
+        json = {
+            'action': 'share',
+            'type': 'card',
+            'target': 0,
+        }
+        responses.process_event(json, None, game_obj, sender=game_obj.players[3])
+
+        # Clone 4 Robot Share
+        json = {
+            'action': 'share',
+            'type': 'card',
+            'target': 7,
+        }
+        responses.process_event(json, None, game_obj, sender=game_obj.players[9])
+        json = {
+            'action': 'share',
+            'type': 'card',
+            'target': 9,
+        }
+        responses.process_event(json, None, game_obj, sender=game_obj.players[7])
+
+        # Bomber and President together
+        winners = game_obj.calc_winners()
+        self.assertEqual(len(game_obj.players), len(winners))
+        for i in range(len(game_obj.players)):
+            player = game_obj.players[i]
+            win = winners[i]
+            if player.role.team == 1:  # Blue Team
+                self.assertFalse(win)
+            elif player.role.team == 2:  # Red Team
+                self.assertTrue(win)
+        self.assertTrue(winners[2])  # Clone 1 (Bomber)
+        self.assertFalse(winners[3])  # Clone 2 (President)
+        self.assertFalse(winners[4])  # Clone 3 (None)
+        self.assertFalse(winners[7])  # Clone 4 (Robot)
+
+    def test_robot(self):
+        players = ['Ike', 'Marth', 'Ness', 'Lucas', 'Samus', 'Link', 'Zelda', 'Shulk', 'Peach', 'Daisy']
+        role_choices = [50, 50, 50, 0, 50, 4, 49]
+        game_obj = game.Game(players, role_choices, shuffle=False)
+
+        # Robot 1 Bomber Share
+        json = {
+            'action': 'share',
+            'type': 'card',
+            'target': 2,
+        }
+        responses.process_event(json, None, game_obj, sender=game_obj.players[1])
+        json = {
+            'action': 'share',
+            'type': 'card',
+            'target': 1,
+        }
+        responses.process_event(json, None, game_obj, sender=game_obj.players[2])
+
+        # Robot 2 President Share
+        json = {
+            'action': 'share',
+            'type': 'card',
+            'target': 3,
+        }
+        responses.process_event(json, None, game_obj, sender=game_obj.players[0])
+        json = {
+            'action': 'share',
+            'type': 'card',
+            'target': 0,
+        }
+        responses.process_event(json, None, game_obj, sender=game_obj.players[3])
+
+        # Robot 4 President Share
+        json = {
+            'action': 'share',
+            'type': 'card',
+            'target': 7,
+        }
+        responses.process_event(json, None, game_obj, sender=game_obj.players[9])
+        json = {
+            'action': 'share',
+            'type': 'card',
+            'target': 9,
+        }
+        responses.process_event(json, None, game_obj, sender=game_obj.players[7])
+
+        # Bomber and President together
+        winners = game_obj.calc_winners()
+        self.assertEqual(len(game_obj.players), len(winners))
+        for i in range(len(game_obj.players)):
+            player = game_obj.players[i]
+            win = winners[i]
+            if player.role.team == 1:  # Blue Team
+                self.assertFalse(win)
+            elif player.role.team == 2:  # Red Team
+                self.assertTrue(win)
+        self.assertFalse(winners[2])  # Robot 1 (Bomber)
+        self.assertTrue(winners[3])  # Robot 2 (President)
+        self.assertFalse(winners[4])  # Robot 3 (None)
+        self.assertFalse(winners[7])  # Robot 4 (Clone)

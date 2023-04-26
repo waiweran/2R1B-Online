@@ -42,6 +42,8 @@ var allCards = [
     {"name2": 'Anarchist', "class": "grayteam", "num": 1, "id": 46},
     {"name2": 'Minion', "class": "grayteam", "num": 1, "id": 47},
     {"name2": 'Mastermind', "class": "grayteam", "num": 1, "id": 48},
+    {"name2": 'Clone', "class": "grayteam", "num": 1, "id": 49},
+    {"name2": 'Robot', "class": "grayteam", "num": 1, "id": 50},
     {"name1": "President's Daughter", "name3": "Martyr", "class": "blueredteam", "num": 2, "bury": true, "id": 32},
     {"name1": "Nurse", "name3": "Tinkerer", "class": "blueredteam", "num": 2, "bury": true, "id": 33},
     {"name2": "Private Eye", "class": "grayteam", "num": 1, "bury": true, "id": 34},

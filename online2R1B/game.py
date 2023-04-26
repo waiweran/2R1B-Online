@@ -78,7 +78,7 @@ class Game:
                         'action': 'updateplayer',
                         'role': {'id': player.role.id, 'source': player.role.source},
                         'conditions': list(player.conditions),
-                        'shares': len(player.shares),
+                        'shares': len(player.card_shares),
                     }))
                     if player.revealed:
                         player.revealed = False
@@ -192,10 +192,12 @@ class Game:
             temp = player1.role
             player1.role = player2.role
             player2.role = temp
-            player1.shares.clear()
+            player1.card_shares.clear()
+            player1.first_share = None
             player1.conditions.clear()
             player1.conditions.update(player1.role.conditions)
-            player2.shares.clear()
+            player2.card_shares.clear()
+            player2.first_share = None
             player2.conditions.clear()
             player2.conditions.update(player2.role.conditions)
             if player1.role.id == 'leprechaun':
@@ -206,13 +208,13 @@ class Game:
                 'action': 'updateplayer',
                 'role': {'id': player1.role.id, 'source': player1.role.source},
                 'conditions': list(player1.conditions),
-                'shares': len(player1.shares),
+                'shares': len(player1.card_shares),
             }))
             self.actions.append(Action(player2.num, {
                 'action': 'updateplayer',
                 'role': {'id': player2.role.id, 'source': player2.role.source},
                 'conditions': list(player2.conditions),
-                'shares': len(player2.shares),
+                'shares': len(player2.card_shares),
             }))
             if player1.revealed:
                 player1.revealed = False
@@ -345,9 +347,9 @@ class Game:
 
             # Gray card win conditions
             elif player.role.id == 'mi6':
-                winners.append('president' in player.shares and 'bomber' in player.shares)
+                winners.append('president' in player.card_shares and 'bomber' in player.card_shares)
             elif player.role.id == 'nucleartyrant':
-                nt_won = 'president' not in player.shares and 'bomber' not in player.shares
+                nt_won = 'president' not in player.card_shares and 'bomber' not in player.card_shares
                 if nt_won:
                     nt_index = player.num
                 winners.append(nt_won)
@@ -517,15 +519,31 @@ class Game:
                             led_other = True
                 winners.append(self.leaders[player.room] == player.num and led_other)
 
+            elif player.role.id == 'clone':
+                winners.append(None)
+
+            elif player.role.id == 'robot':
+                winners.append(None)
+
             # Add gray card win conditions here
 
             # Unknown cards (auto-lose)
             else:
                 winners.append(False)
 
+        for i in range(len(self.players)):
+            player = self.players[i]
+            if player.role.id == 'clone':
+                winners[i] = player.first_share and player.first_share.role.id != 'robot' \
+                             and winners[player.first_share.num]
+            elif player.role.id == 'robot':
+                winners[i] = player.first_share and player.first_share.role.id != 'clone' \
+                             and not winners[player.first_share.num]
+
         if nt_index >= 0:
             for i in range(len(winners)):
                 winners[i] = (i == nt_index)
+
         return winners
 
 
@@ -536,7 +554,8 @@ class Player:
     role: 'Role'
     room: int
     conditions: Set[str]
-    shares: Set[str]
+    first_share: Optional['Player']
+    card_shares: Set[str]
     color_share: Optional[int]
     card_share: Optional[int]
     votes: int
@@ -555,7 +574,8 @@ class Player:
         self.room = room
         self.conditions = set()
         self.conditions.update(role.conditions)
-        self.shares = set()
+        self.first_share = None
+        self.card_shares = set()
         self.color_share = None
         self.card_share = None
         self.votes = 0
@@ -569,7 +589,9 @@ class Player:
 
     def mark_card_share(self, player: 'Player') -> List['Action']:
         actions = list()
-        self.shares.add(player.role.id)
+        self.card_shares.add(player.role.id)
+        if not self.first_share:
+            self.first_share = player
 
         # Giving Conditions
         change = True
@@ -645,13 +667,15 @@ class Player:
                 'action': 'updateplayer',
                 'role': {'id': self.role.id, 'source': self.role.source},
                 'conditions': list(self.conditions),
-                'shares': len(self.shares),
+                'shares': len(self.card_shares),
             }))
 
         return actions
 
     def mark_color_share(self, player: 'Player') -> List['Action']:
         actions = list()
+        if not self.first_share:
+            self.first_share = player
 
         # Zombie Condition
         if (player.role.team == 3 or 'zombie' in player.conditions) and 'immune' not in player.conditions:
@@ -660,7 +684,7 @@ class Player:
                 'action': 'updateplayer',
                 'role': {'id': self.role.id, 'source': self.role.source},
                 'conditions': list(self.conditions),
-                'shares': len(self.shares),
+                'shares': len(self.card_shares),
             }))
 
         return actions
@@ -677,7 +701,7 @@ class Player:
                 'action': 'updateplayer',
                 'role': {'id': player.role.id, 'source': player.role.source},
                 'conditions': list(player.conditions),
-                'shares': len(self.shares),
+                'shares': len(self.card_shares),
             }))
         return actions
 

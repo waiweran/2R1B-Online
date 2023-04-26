@@ -1,5 +1,6 @@
 High Priority
 
+Make sure it still works
 Include more cards
 Add links to rules, character guide
 
