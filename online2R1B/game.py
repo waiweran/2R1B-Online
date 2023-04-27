@@ -36,6 +36,8 @@ class Game:
         for i in range(len(player_names)):
             player = Player(player_names[i], i, self.roles[i], rooms[i])
             self.players.append(player)
+            if self.roles[i].id in ('blueambassador', 'redambassador'):
+                self.num_players -= 1
 
         round_options = [
             {"min": 6, "max": 10, "rounds": [1, 1, 1]},
@@ -336,7 +338,8 @@ class Game:
             elif player.role.team == 3:
                 win = True
                 for sub_player in self.players:
-                    if 'zombie' not in sub_player.conditions and 'dead' not in sub_player.conditions:
+                    if 'zombie' not in sub_player.conditions and 'dead' not in sub_player.conditions and \
+                            sub_player.role.id != 51:
                         win = False
                         break
                 winners.append(win)
@@ -726,6 +729,7 @@ def deal_roles(num_players: int, choices: List[int], shuffle: bool) -> Tuple[Lis
     doctor_engineer = False
     daughter_martyr = False
     nurse_tinkerer = False
+    ambassador = False
     for choice in choices:
         role_choice = cards.roleList[choice]
         if choice == 11 or (31 < choice < 35 and not settings['bury']):
@@ -746,6 +750,8 @@ def deal_roles(num_players: int, choices: List[int], shuffle: bool) -> Tuple[Lis
                 daughter_martyr = True
             elif choice == 33:
                 nurse_tinkerer = True
+            elif choice == 51:
+                ambassador = True
             if 31 < choice < 35 and not settings['bury']:
                 settings['bury'] = True
 
@@ -794,12 +800,28 @@ def deal_roles(num_players: int, choices: List[int], shuffle: bool) -> Tuple[Lis
                 break
 
     rooms = list()
-    while len(rooms) < len(roles) / 2:
+    if ambassador:
+        num_roles -= 2
+    while len(rooms) < num_roles / 2:
         rooms.append(0)
-    while len(rooms) < len(roles):
+    while len(rooms) < num_roles:
         rooms.append(1)
     if shuffle:
         random.shuffle(rooms)
+    if ambassador:
+        rooms.append(-1)
+        rooms.append(-1)
+        for i in range(0, len(roles)):
+            if roles[i].id == 51:
+                swap = rooms[i]
+                rooms[i] = -1
+                if rooms[-1] == -1:
+                    rooms[-1] = swap
+                else:
+                    rooms[-2] = swap
+
+
+
 
     return roles, rooms, settings
 

@@ -49,6 +49,7 @@ var allCards = [
     {"name2": "Private Eye", "class": "grayteam", "num": 1, "bury": true, "id": 34},
     {"name2": 'Drunk', "class": "unknownteam", "num": 0, "id": 11},
     {"name2": 'Zombie', "class": "greenteam", "num": 1, "id": 14},
+    {"name1": "Ambassador", "name3": "Ambassador", "class": "blueredteam", "num": 2, "id": 51},
     {"name1": "Blind", "name3": "Blind", "class": "blueredteam", "num": 2, "id": 35},
     {"name1": "Clown", "name3": "Clown", "class": "blueredteam", "num": 2, "id": 36},
     {"name1": "Mime", "name3": "Mime", "class": "blueredteam", "num": 2, "id": 37},
@@ -158,6 +159,7 @@ function createGame() {
         var selectedCards = [];
         var numPlayers = 2;
         var burying = false;
+        var ambassadors = false;
         for(var element of document.getElementById('gamecards').children) {
             if(element.card != undefined) {
                 selectedCards.push(element.card.id);
@@ -166,9 +168,12 @@ function createGame() {
                     burying = true;
                     numPlayers--;
                 }
+                if(element.card.id == 51) {  // Ambassador
+                    ambassadors = true;
+                }
             }
         }
-        if(numPlayers >= 6) {
+        if(numPlayers >= 6 && !ambassadors || numPlayers >= 8) {
             document.getElementById('rolesinput').value = JSON.stringify(selectedCards);
             document.getElementById('numplayersinput').value = numPlayers;
             document.getElementById('expandinput').value = expand;

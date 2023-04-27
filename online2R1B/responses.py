@@ -271,9 +271,12 @@ def process_event(json, game_entry, game_obj: Game, sender):
                 if player.room == 1:
                     leave_room('room_{}_0'.format(game_entry.id), player.sid)
                     join_room('room_{}_1'.format(game_entry.id), player.sid)
-                else:
+                elif player.room == 0:
                     leave_room('room_{}_1'.format(game_entry.id), player.sid)
                     join_room('room_{}_0'.format(game_entry.id), player.sid)
+                else:
+                    join_room('room_{}_0'.format(game_entry.id), player.sid)
+                    join_room('room_{}_1'.format(game_entry.id), player.sid)
             game_obj.start_time = json['startTime']
             socketio.emit('event response', {
                 'action': 'startround',
@@ -466,7 +469,6 @@ def process_event(json, game_entry, game_obj: Game, sender):
                     sender.my_votes.add(target.num)
                     target.votes += 1
                     if target.votes > game_obj.num_players/4 and not game_obj.usurped[target.room]:
-                        # TODO clean use of num_players for Ambassador from above line
                         game_obj.set_leader(target.room, target.num, True)
                         target.votes = 0
                         for player in game_obj.players:

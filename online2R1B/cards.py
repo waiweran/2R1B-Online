@@ -45,6 +45,7 @@ allCards = [
     {"name2": "Private Eye", "class": "grayteam", "num": 1, "bury": True, "id": 34},
     {"name2": 'Drunk', "class": "unknownteam", "num": 0, "id": 11},
     {"name2": 'Zombie', "class": "greenteam", "num": 1, "id": 14},
+    {"name1": "Ambassador", "name3": "Ambassador", "class": "blueredteam", "num": 2, "id": 51},
     {"name1": "Blind", "name3": "Blind", "class": "blueredteam", "num": 2, "id": 35},
     {"name1": "Clown", "name3": "Clown", "class": "blueredteam", "num": 2, "id": 36},
     {"name1": "Mime", "name3": "Mime", "class": "blueredteam", "num": 2, "id": 37},
@@ -237,6 +238,10 @@ roleList = [
     [
         {'id': 'robot', 'source': '/static/Cards/Robot.png', 'team': 0},
     ],
+    [
+        {'id': 'blueambassador', 'source': '/static/Cards/BlueAmbassador.png', 'team': 1},
+        {'id': 'redambassador', 'source': '/static/Cards/RedAmbassador.png', 'team': 2},
+    ],
 
 ]
 
@@ -250,6 +255,6 @@ no_bury = {
 }
 
 
-# Not included yet: Bouncer, Ambassador, Cupid&Eris / Enforcer, Mayor, Security.
+# Not included yet: Bouncer, Cupid&Eris / Enforcer, Mayor, Security.
 
 # Not useful to include: Paparazzo
