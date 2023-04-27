@@ -768,6 +768,16 @@ function initialize(game, myPlayerNum, rejoin) {
         myHostages.innerHTML = '';
         sentHostages = [];
 
+        console.log("here " + myPlayer.room + " " + game.myRole.id)
+        var ambRoom1 = document.createElement("DIV");
+        var ambRoom2 = document.createElement("DIV");
+        if(myPlayer.room == -1) {
+            myRoom.appendChild(ambRoom1);
+            myRoom.appendChild(document.createElement("BR"));
+            myRoom.appendChild(ambRoom2);
+            console.log("Adding both rooms to Ambassador")
+        }
+
         // Put players in the rooms
         for(var player of players) {
             var nameLbl = document.createElement('LABEL');
@@ -782,6 +792,20 @@ function initialize(game, myPlayerNum, rejoin) {
             }
             if(player.room == myPlayer.room) {
                 myRoom.appendChild(player.element);
+            }
+            if(game.myRole.id == 'blueambassador' || game.myRole.id == 'redambassador') {
+                if(player.room == 0) {
+                    ambRoom1.appendChild(player.element);
+                }
+                else if(player.room == 1) {
+                    ambRoom2.appendChild(player.element);
+                }
+                player.cardShareBtn.disabled = true;
+                player.cardShareBtn.style.display = "none";
+                player.colorShareBtn.disabled = true;
+                player.colorShareBtn.style.display = "none";
+                player.privateRevealBtn.disabled = true;
+                player.privateRevealBtn.style.display = "none";
             }
         }
 
