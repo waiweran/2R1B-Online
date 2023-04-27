@@ -11,7 +11,7 @@ class Game:
     rounds: List[dict]
     leaders: List[Optional[int]]
     leader_log: List[Tuple[List[Tuple[int, bool]], List[Tuple[int, bool]]]]
-    usurped: List[bool]
+    usurper_power: List[bool]
     round: int
     start_time: Optional[int]
     rooms_sending_hostages: List[dict]
@@ -26,7 +26,7 @@ class Game:
         self.rounds = []
         self.leaders = [None, None]
         self.leader_log = [(list(), list())]
-        self.usurped = [False, False]
+        self.usurper_power = [False, False]
         self.round = 0
         self.start_time = None
         self.rooms_sending_hostages = list()
@@ -65,7 +65,7 @@ class Game:
         for player in self.players:
             player.my_votes.clear()
             player.votes = 0
-        self.usurped = [False, False]
+        self.usurper_power = [False, False]
 
         # Update Drunk
         if self.round == len(self.rounds) - 1 and self.settings['drunk']:
@@ -78,6 +78,8 @@ class Game:
                         'action': 'updateplayer',
                         'role': {'id': player.role.id, 'source': player.role.source},
                         'conditions': list(player.conditions),
+                        'partner': player.partner,
+                        'power': player.power_available,
                         'shares': len(player.card_shares),
                     }))
                     if player.revealed:
@@ -126,7 +128,8 @@ class Game:
             for player in self.players:
                 rooms.append(player.room)
                 player.room_log.append(player.room)
-                player.agent_share = True
+                if player.role.id in ('blueagent', 'redagent', 'blueenforcer', 'redenforcer'):
+                    player.power_available = True
             for player in self.players:
                 roles = list()
                 for sub_player in self.players:
@@ -208,12 +211,16 @@ class Game:
                 'action': 'updateplayer',
                 'role': {'id': player1.role.id, 'source': player1.role.source},
                 'conditions': list(player1.conditions),
+                'partner': player1.partner,
+                'power': player1.power_available,
                 'shares': len(player1.card_shares),
             }))
             self.actions.append(Action(player2.num, {
                 'action': 'updateplayer',
                 'role': {'id': player2.role.id, 'source': player2.role.source},
                 'conditions': list(player2.conditions),
+                'partner': player2.partner,
+                'power': player2.power_available,
                 'shares': len(player2.card_shares),
             }))
             if player1.revealed:
@@ -563,7 +570,7 @@ class Player:
     prediction: Optional[int]
     partner: Optional[int]
     leprechaun: bool
-    agent_share: bool
+    power_available: bool
     revealed: bool
     room_log: List[int]
 
@@ -583,7 +590,7 @@ class Player:
         self.prediction = None
         self.partner = None
         self.leprechaun = (role.id == 'leprechaun')
-        self.agent_share = True
+        self.power_available = True
         self.revealed = False
         self.room_log = [room]
 
@@ -667,6 +674,8 @@ class Player:
                 'action': 'updateplayer',
                 'role': {'id': self.role.id, 'source': self.role.source},
                 'conditions': list(self.conditions),
+                'partner': self.partner,
+                'power': self.power_available,
                 'shares': len(self.card_shares),
             }))
 
@@ -684,6 +693,8 @@ class Player:
                 'action': 'updateplayer',
                 'role': {'id': self.role.id, 'source': self.role.source},
                 'conditions': list(self.conditions),
+                'partner': self.partner,
+                'power': self.power_available,
                 'shares': len(self.card_shares),
             }))
 
@@ -701,6 +712,8 @@ class Player:
                 'action': 'updateplayer',
                 'role': {'id': player.role.id, 'source': player.role.source},
                 'conditions': list(player.conditions),
+                'partner': self.partner,
+                'power': self.power_available,
                 'shares': len(self.card_shares),
             }))
         return actions

@@ -337,9 +337,9 @@ def process_event(json, game_entry, game_obj: Game, sender):
 
             # Usurper permanent reveal action
             if sender.role.id in ('blueusurper', 'redusurper') and \
-                    not sender.revealed and not game_obj.usurped[sender.room]:
+                    not sender.revealed and not game_obj.usurper_power[sender.room]:
                 game_obj.set_leader(sender.room, sender.num, True)
-                game_obj.usurped[sender.room] = True
+                game_obj.usurper_power[sender.room] = True
                 sender.votes = 0
                 for player in game_obj.players:
                     if sender.num in player.my_votes:
@@ -452,7 +452,7 @@ def process_event(json, game_entry, game_obj: Game, sender):
             # Leader hands over power
             elif game_obj.leaders[target.room] == sender.num:
                 game_obj.set_leader(target.room, target.num, False)
-                game_obj.usurped[target.room] = False
+                game_obj.usurper_power[target.room] = False
                 target.votes = 0
                 for player in game_obj.players:
                     if target.num in player.my_votes:
@@ -465,8 +465,7 @@ def process_event(json, game_entry, game_obj: Game, sender):
                 else:
                     sender.my_votes.add(target.num)
                     target.votes += 1
-                    if target.votes > game_obj.num_players/4 and not game_obj.usurped[target.room]:
-                        # TODO clean use of num_players for Ambassador from above line
+                    if target.votes > game_obj.num_players/4 and not game_obj.usurper_power[target.room]:
                         game_obj.set_leader(target.room, target.num, True)
                         target.votes = 0
                         for player in game_obj.players:
@@ -505,18 +504,236 @@ def process_event(json, game_entry, game_obj: Game, sender):
                 game_obj.setup_round()
 
     elif json['action'] == 'decision':
-        if json['type'] == 'private eye' and sender.role.id == 'privateeye':
+        if json['type'] == 'enforcer' and sender.role.id in ('blueenforcer', 'redenforcer') and sender.power_available:
+            socketio.emit('quick event', {'action': 'decision'}, to=sender.sid)
+            sender.power_available = False
+            room = list()
+            for player in game_obj.players:
+                if player.room == sender.room and player.num != sender.num:
+                    room.append(player)
+            target1 = room[json['choice'][0]]
+            target2 = room[json['choice'][1]]
+
+            # Update Power
+            game_obj.actions.append(Action(sender.num, {
+                'action': 'updateplayer',
+                'role': {'id': sender.role.id, 'source': sender.role.source},
+                'conditions': list(sender.conditions),
+                'partner': sender.partner,
+                'power': sender.power_available,
+                'shares': len(sender.card_shares),
+            }))
+
+            # Private Reveal
+            game_obj.actions.append(Action(target1.num, {
+                'action': 'privatereveal',
+                'target': sender.num,
+                'type': 'card',
+                'role': sender.role.source,
+                'alert': 'Enforcer forcing share',
+            }))
+            game_obj.actions.append(Action(target2.num, {
+                'action': 'privatereveal',
+                'target': sender.num,
+                'type': 'card',
+                'role': sender.role.source,
+                'alert': 'Enforcer forcing share',
+            }))
+
+            # Clear pending shares
+            if target1.color_share == target2.num:
+                target1.color_share = None
+            if target1.card_share == target2.num:
+                target1.card_share = None
+            if target2.color_share == target1.num:
+                target2.color_share = None
+            if target2.card_share == target1.num:
+                target2.card_share = None
+
+            # Forced card share
+            game_obj.actions.append(Action(target1.num, {
+                'action': 'cardshare',
+                'target': target2.num,
+                'role': target2.role.source,
+                'zombie': 'zombie' in target2.conditions,
+                'alert': 'Enforcer forced Share',
+            }))
+            game_obj.actions.append(Action(target2.num, {
+                'action': 'cardshare',
+                'target': target1.num,
+                'role': target1.role.source,
+                'zombie': 'zombie' in target1.conditions,
+                'alert': 'Enforcer forced Share',
+            }))
+            game_obj.mark_card_share(target2, target1)
+
+            # Update share colored buttons
+            sender_incoming = list()
+            target_incoming = list()
+            for player in game_obj.players:
+                if player.card_share == target2.num:
+                    sender_incoming.append({'type': 'card', 'sender': player.num})
+                if player.color_share == target2.num:
+                    sender_incoming.append({'type': 'color', 'sender': player.num})
+                if player.card_share == target1.num:
+                    target_incoming.append({'type': 'card', 'sender': player.num})
+                if player.color_share == target1.num:
+                    target_incoming.append({'type': 'color', 'sender': player.num})
+            game_obj.actions.append(Action(target2.num, {
+                'action': 'shareupdate',
+                'incoming': sender_incoming,
+                'colorout': target2.color_share,
+                'cardout': target2.card_share,
+            }))
+            game_obj.actions.append(Action(target1.num, {
+                'action': 'shareupdate',
+                'incoming': target_incoming,
+                'colorout': target1.color_share,
+                'cardout': target1.card_share,
+            }))
+
+        elif json['type'] == 'cupid' and sender.role.id == 'cupid' and sender.power_available:
+            room = list()
+            for player in game_obj.players:
+                if player.room == sender.room and player.num != sender.num:
+                    room.append(player)
+            player1 = room[json['choice'][0]]
+            player2 = room[json['choice'][1]]
+
+            if 'in hate' in player1.conditions:
+                player1.conditions.remove('in hate')
+            else:
+                player1.conditions.add('in love')
+            if 'in hate' in player2.conditions:
+                player2.conditions.remove('in hate')
+            else:
+                player2.conditions.add('in love')
+            player1.partner = player2.num
+            player2.partner = player1.num
+            socketio.emit('quick event', {'action': 'decision'}, to=sender.sid)
+            sender.power_available = False
+
+            # Update Conditions
+            game_obj.actions.append(Action(player1.num, {
+                'action': 'updateplayer',
+                'role': {'id': player1.role.id, 'source': player1.role.source},
+                'conditions': list(player1.conditions),
+                'partner': player1.partner,
+                'power': player1.power_available,
+                'shares': len(player1.card_shares),
+            }))
+            game_obj.actions.append(Action(player2.num, {
+                'action': 'updateplayer',
+                'role': {'id': player2.role.id, 'source': player2.role.source},
+                'conditions': list(player2.conditions),
+                'partner': player2.partner,
+                'power': player2.power_available,
+                'shares': len(player2.card_shares),
+            }))
+            game_obj.actions.append(Action(sender.num, {
+                'action': 'updateplayer',
+                'role': {'id': sender.role.id, 'source': sender.role.source},
+                'conditions': list(sender.conditions),
+                'partner': sender.partner,
+                'power': sender.power_available,
+                'shares': len(sender.card_shares),
+            }))
+
+            # Private Reveal
+            game_obj.actions.append(Action(player1.num, {
+                'action': 'privatereveal',
+                'target': sender.num,
+                'type': 'card',
+                'role': sender.role.source,
+                'alert': 'You are in love with {}'.format(player2.name),
+            }))
+            game_obj.actions.append(Action(player2.num, {
+                'action': 'privatereveal',
+                'target': sender.num,
+                'type': 'card',
+                'role': sender.role.source,
+                'alert': 'You are in love with {}'.format(player1.name),
+            }))
+
+        elif json['type'] == 'eris' and sender.role.id == 'eris' and sender.power_available:
+            room = list()
+            for player in game_obj.players:
+                if player.room == sender.room and player.num != sender.num:
+                    room.append(player)
+            player1 = room[json['choice'][0]]
+            player2 = room[json['choice'][1]]
+
+            if 'in love' in player1.conditions:
+                player1.conditions.remove('in love')
+            else:
+                player1.conditions.add('in hate')
+            if 'in love' in player2.conditions:
+                player2.conditions.remove('in love')
+            else:
+                player2.conditions.add('in hate')
+            player1.partner = player2.num
+            player2.partner = player1.num
+            socketio.emit('quick event', {'action': 'decision'}, to=sender.sid)
+            sender.power_available = False
+
+            # Update Conditions
+            game_obj.actions.append(Action(player1.num, {
+                'action': 'updateplayer',
+                'role': {'id': player1.role.id, 'source': player1.role.source},
+                'conditions': list(player1.conditions),
+                'partner': player1.partner,
+                'power': player1.power_available,
+                'shares': len(player1.card_shares),
+            }))
+            game_obj.actions.append(Action(player2.num, {
+                'action': 'updateplayer',
+                'role': {'id': player2.role.id, 'source': player2.role.source},
+                'conditions': list(player2.conditions),
+                'partner': player2.partner,
+                'power': player2.power_available,
+                'shares': len(player2.card_shares),
+            }))
+            game_obj.actions.append(Action(sender.num, {
+                'action': 'updateplayer',
+                'role': {'id': sender.role.id, 'source': sender.role.source},
+                'conditions': list(sender.conditions),
+                'partner': sender.partner,
+                'power': sender.power_available,
+                'shares': len(sender.card_shares),
+            }))
+
+            # Private Reveal
+            game_obj.actions.append(Action(player1.num, {
+                'action': 'privatereveal',
+                'target': sender.num,
+                'type': 'card',
+                'role': sender.role.source,
+                'alert': 'You are in hate with {}'.format(player2.name),
+            }))
+            game_obj.actions.append(Action(player2.num, {
+                'action': 'privatereveal',
+                'target': sender.num,
+                'type': 'card',
+                'role': sender.role.source,
+                'alert': 'You are in hae with {}'.format(player1.name),
+            }))
+
+        elif json['type'] == 'private eye' and sender.role.id == 'privateeye':
             sender.prediction = json['choice']
+            socketio.emit('quick event', {'action': 'decision'}, to='room_{}'.format(json['id']))
+
         elif json['type'] == 'gambler' and sender.role.id == 'gambler':
             sender.prediction = json['choice']
+            socketio.emit('quick event', {'action': 'decision'}, to='room_{}'.format(json['id']))
+
         elif json['type'] == 'sniper' and sender.role.id == 'sniper':
             sender.prediction = json['choice']
-        socketio.emit('quick event', {'action': 'decision'}, to='room_{}'.format(json['id']))
+            socketio.emit('quick event', {'action': 'decision'}, to='room_{}'.format(json['id']))
 
     elif json['action'] == 'power':
-        target: Player = game_obj.players[json['target']]
-        if sender.role.id in ('blueagent', 'redagent') and sender.agent_share:
-            sender.agent_share = False
+        if sender.role.id in ('blueagent', 'redagent') and sender.power_available:
+            target: Player = game_obj.players[json['target']]
+            sender.power_available = False
 
             # Clear pending shares
             if target.color_share == sender.num:
@@ -569,7 +786,18 @@ def process_event(json, game_entry, game_obj: Game, sender):
                 'cardout': target.card_share,
             }))
 
+            # Update Power
+            game_obj.actions.append(Action(sender.num, {
+                'action': 'updateplayer',
+                'role': {'id': sender.role.id, 'source': sender.role.source},
+                'conditions': list(sender.conditions),
+                'partner': sender.partner,
+                'power': sender.power_available,
+                'shares': len(sender.card_shares),
+            }))
+
         elif sender.role.id in ('blueconman', 'redconman'):
+            target: Player = game_obj.players[json['target']]
             game_obj.actions.extend(sender.mark_private_reveal(target))
             game_obj.actions.extend(target.mark_private_reveal(sender))
             game_obj.actions.append(Action(sender.num, {
@@ -586,5 +814,48 @@ def process_event(json, game_entry, game_obj: Game, sender):
                 'alert': 'Conman Forced Reveal',
             }))
 
+        elif sender.role.id in ('blueenforcer', 'redenforcer') and sender.power_available:
+            options = list()
+            for player in game_obj.players:
+                if player.room == sender.room and player.num != sender.num:
+                    options.append(player.name)
+            game_obj.actions.append(Action(sender.num, {
+                'action': 'power',
+                'name': 'Enforcer',
+                'description': 'Force 2 players to card share',
+                'type': 'enforcer',
+                'options': options,
+                'target': sender.num,
+            }))
+
+        elif sender.role.id == 'cupid' and sender.power_available:
+            options = list()
+            for player in game_obj.players:
+                if player.room == sender.room and player.num != sender.num:
+                    options.append(player.name)
+            game_obj.actions.append(Action(sender.num, {
+                'action': 'power',
+                'name': 'Cupid',
+                'description': 'Make 2 players in love',
+                'type': 'cupid',
+                'options': options,
+                'target': sender.num,
+            }))
+
+        elif sender.role.id == 'eris' and sender.power_available:
+            options = list()
+            for player in game_obj.players:
+                if player.room == sender.room and player.num != sender.num:
+                    options.append(player.name)
+            game_obj.actions.append(Action(sender.num, {
+                'action': 'power',
+                'name': 'Eris',
+                'description': 'Make 2 players in hate',
+                'type': 'eris',
+                'options': options,
+                'target': sender.num,
+            }))
+
         elif sender.role.id in ('bluebouncer', 'redbouncer'):
+            target: Player = game_obj.players[json['target']]
             pass  # TODO: implement bouncer

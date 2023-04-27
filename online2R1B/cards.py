@@ -17,6 +17,8 @@ allCards = [
     {"name1": "Usurper", "name3": "Usurper", "class": "blueredteam", "num": 2, "id": 43},
     {"name1": "Agent", "name3": "Agent", "class": "blueredteam", "num": 2, "id": 44},
     {"name1": "Conman", "name3": "Conman", "class": "blueredteam", "num": 2, "id": 45},
+    {"name1": "Eris", "name3": "Cupid", "class": "blueredteam", "num": 2, "id": 51},
+    {"name1": "Enforcer", "name3": "Enforcer", "class": "blueredteam", "num": 2, "id": 52},
     {"name2": 'Gambler', "class": "grayteam", "num": 1, "id": 13},
     {"name2": 'MI6', "class": "grayteam", "num": 1, "id": 4},
     {"name2": 'Nuclear Tyrant', "class": "grayteam", "num": 1, "id": 31},
@@ -237,6 +239,14 @@ roleList = [
     [
         {'id': 'robot', 'source': '/static/Cards/Robot.png', 'team': 0},
     ],
+    [
+        {'id': 'eris', 'source': '/static/Cards/Eris.png', 'team': 1},
+        {'id': 'cupid', 'source': '/static/Cards/Cupid.png', 'team': 2},
+    ],
+    [
+        {'id': 'blueenforcer', 'source': '/static/Cards/BlueEnforcer.png', 'team': 1},
+        {'id': 'redenforcer', 'source': '/static/Cards/RedEnforcer.png', 'team': 2},
+    ],
 
 ]
 
@@ -250,6 +260,10 @@ no_bury = {
 }
 
 
-# Not included yet: Bouncer, Ambassador, Cupid&Eris / Enforcer, Mayor, Security.
+# Not included yet:
+#  - Bouncer: Complex as it requires switching a player's room mid-game (See partial implementation)
+#  - Ambassador: Complex to do as players not technically part of the game (See ambassador branch)
+#  - Mayor: Requires altering election mechanics based on public reveal
+#  - Security: Requires altering hostage selection based on public reveal
 
 # Not useful to include: Paparazzo

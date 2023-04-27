@@ -21,6 +21,8 @@ var allCards = [
     {"name1": "Usurper", "name3": "Usurper", "class": "blueredteam", "num": 2, "id": 43},
     {"name1": "Agent", "name3": "Agent", "class": "blueredteam", "num": 2, "id": 44},
     {"name1": "Conman", "name3": "Conman", "class": "blueredteam", "num": 2, "id": 45},
+    {"name1": "Eris", "name3": "Cupid", "class": "blueredteam", "num": 2, "id": 51},
+    {"name1": "Enforcer", "name3": "Enforcer", "class": "blueredteam", "num": 2, "id": 52},
     {"name2": 'Gambler', "class": "grayteam", "num": 1, "id": 13},
     {"name2": 'MI6', "class": "grayteam", "num": 1, "id": 4},
     {"name2": 'Nuclear Tyrant', "class": "grayteam", "num": 1, "id": 31},
@@ -382,7 +384,6 @@ function initialize(game, myPlayerNum, rejoin) {
     socket.on('time check', function(msg) {
         var localTime = (Date.now() + msg.localTime)/2;
         timeOffset = msg.serverTime - localTime;
-        console.log("Updating time offset: " + timeOffset);
     });
 
     // Hide overlays
@@ -399,9 +400,13 @@ function initialize(game, myPlayerNum, rejoin) {
     myCard.src = game.myRole.source;
     var myPlayer = null;
     var conditions = game.myConditions;
+    var partnerName = "";
+    var powerAvailable = true;
     var numShares = 0;
     var publicRevealBtn = document.getElementById('publicreveal');
     var permanentPublicRevealBtn = document.getElementById('permanentpublicreveal');
+    var usePowerBtn = document.getElementById('usepower');
+    var hasPower = false;
     publicRevealBtn.onclick = function() {
         var revealPane = document.getElementById("revealing");
         var fadeBox = document.getElementById('fade');
@@ -425,17 +430,25 @@ function initialize(game, myPlayerNum, rejoin) {
     permanentPublicRevealBtn.onclick = function() {
         gameUpdate({"action": "permanentpublicreveal"});
     }
+    usePowerBtn.onclick = function() {
+        gameUpdate({"action": "power"})
+    }
     var cardButtons = document.getElementById('cardbuttons');
     cardButtons.onmouseover = function(e) {
         publicRevealBtn.style.display = "";
         permanentPublicRevealBtn.style.display = "";
+        if(hasPower) {
+            usePowerBtn.style.display = "";
+        }
     }
     cardButtons.onmouseout = function(e) {
         publicRevealBtn.style.display = "none";
         permanentPublicRevealBtn.style.display = "none";
+        usePowerBtn.style.display = "none";
     }
     publicRevealBtn.style.display = "none";
     permanentPublicRevealBtn.style.display = "none";
+    usePowerBtn.style.display = "none";
 
     // General Setup
     var round = {"num": game.round, "time": game.time, "hostages": game.numHostages}
@@ -618,15 +631,31 @@ function initialize(game, myPlayerNum, rejoin) {
         // Update button accessibility
         publicRevealBtn.disabled = false;
         permanentPublicRevealBtn.disabled = false;
+        usePowerBtn.disabled = !powerAvailable;
         permanentPublicRevealBtn.innerHTML = "Permanent Reveal";
+        hasPower = false;
+        if(game.myRole.id == 'blueusurper' || game.myRole.id == 'redusurper') {
+            permanentPublicRevealBtn.innerHTML = "Reveal & Usurp"
+        }
+        else if(game.myRole.id == 'blueenforcer' || game.myRole.id == 'redenforcer') {
+            hasPower = true;
+            usePowerBtn.innerHTML = "Use Enforcer Power";
+        }
+        else if(game.myRole.id == 'cupid') {
+            hasPower = true;
+            usePowerBtn.innerHTML = "Use Cupid Power";
+        }
+        else if(game.myRole.id == 'eris') {
+            hasPower = true;
+            usePowerBtn.innerHTML = "Use Eris Power";
+        }
         if(conditions.includes("coy" || conditions.includes("shy") ||
                 conditions.includes("savvy") || conditions.includes("paranoid"))) {
             publicRevealBtn.disabled = true;
             permanentPublicRevealBtn.disabled = true;
+            usePowerBtn.disabled = true;
         }
-        if(game.myRole.id == 'blueusurper' || game.myRole.id == 'redusurper') {
-            permanentPublicRevealBtn.innerHTML = "Reveal & Usurp"
-        }
+
         for(var player of players) {
             player.powerBtn.style.display = "none";
             player.colorShareBtn.disabled = false;
@@ -651,13 +680,13 @@ function initialize(game, myPlayerNum, rejoin) {
             if(game.myRole.id == 'blueagent' || game.myRole.id == 'redagent') {
                 player.powerBtn.innerHTML = "Agent Power";
                 player.powerBtn.style.display = "";
-                player.powerBtn.disabled = false;
+                player.powerBtn.disabled = !powerAvailable;
             }
             else if(game.myRole.id == 'bluebouncer' || game.myRole.id == 'redbouncer') {
                 player.powerBtn.innerHTML = "Bouncer Power";
                 player.powerBtn.style.display = "";
                 if(roomSize > 0) {
-                    player.powerBtn.disabled = false;
+                    player.powerBtn.disabled = !powerAvailable;
                 }
                 else {
                     player.powerBtn.disabled = true;
@@ -738,6 +767,14 @@ function initialize(game, myPlayerNum, rejoin) {
 
             else if(conditions[i] == 'paranoid') {
                 condstr = condstr + 'Paranoid';
+            }
+
+            else if(conditions[i] == 'in love') {
+                condstr = condstr + 'In love with ' + partnerName;
+            }
+
+            else if(conditions[i] == 'in hate') {
+                condstr = condstr + 'In hate with ' + partnerName;
             }
 
             if(i < conditions.length - 1) {
@@ -1080,12 +1117,18 @@ function initialize(game, myPlayerNum, rejoin) {
         }
     }
 
-    function displayDecision(name, descrip, tag, options, chooser) {
+    function displayDecision(name, descrip, tag, options, chooser, multiple) {
         document.getElementById('decision').style.display = "";
         document.getElementById('hostages').style.display = "none";
         document.getElementById('bothrooms').style.display = "none";
         var decisionPane = document.getElementById('decisionoptions');
         decisionPane.innerHTML = "";
+        var choices = [];
+        var choiceNum = 0;
+        for(var option of options) {
+            choices.push(false);
+        }
+        var doneBtn = document.createElement('BUTTON');
         if(chooser == myPlayerNum) {
             document.getElementById('decisiontitle').innerHTML = name;
             document.getElementById('decisionsubtitle').innerHTML = descrip;
@@ -1093,17 +1136,61 @@ function initialize(game, myPlayerNum, rejoin) {
                 decisionPane.appendChild(makeOption(options[i], i));
                 decisionPane.appendChild(document.createElement('BR'));
             }
+            if(multiple) {
+                decisionPane.appendChild(document.createElement('BR'));
+                doneBtn.innerHTML = "Done";
+                doneBtn.disabled = true;
+                doneBtn.onclick = function(e) {
+                    var chosen = [];
+                    for(var i = 0; i < choices.length; i++) {
+                        if(choices[i]) {
+                            chosen.push(i);
+                        }
+                    }
+                    gameUpdate({'action': 'decision', 'type': tag, 'choice': chosen}, true);
+                };
+                var cancelBtn = document.createElement('BUTTON');
+                cancelBtn.innerHTML = "Cancel";
+                cancelBtn.onclick = function(e) {
+                    document.getElementById('decision').style.display = "none";
+                };
+                decisionPane.appendChild(doneBtn);
+                decisionPane.appendChild(cancelBtn);
+
+            }
         }
         else {
-            document.getElementById('decisiontitle').innerHTML = name; 
+            document.getElementById('decisiontitle').innerHTML = name;
             document.getElementById('decisionsubtitle').innerHTML = "Wait for " + players[chooser].name;
         }
 
         function makeOption(option, num) {
-            var optionBtn = document.createElement('BUTTON')
+            var optionBtn = document.createElement('BUTTON');
             optionBtn.innerHTML = option;
-            optionBtn.onclick = function() {
-                gameUpdate({'action': 'decision', 'type': tag, 'choice': num}, true)
+            if(multiple) {
+                optionBtn.onclick = function(e) {
+                    choices[num] = !choices[num];
+                    if(choices[num]) {
+                        optionBtn.style.backgroundColor = "lightgreen";
+                        choiceNum++;
+                    }
+                    else {
+                        optionBtn.style.backgroundColor = null;
+                        choiceNum--;
+                    }
+                    if(choiceNum == 2) {
+                        doneBtn.disabled = false;
+                    }
+                    else {
+                        doneBtn.disabled = true;
+                    }
+
+                };
+            }
+            else {
+                optionBtn.onclick = function(e) {
+                    gameUpdate({'action': 'decision', 'type': tag, 'choice': num}, true);
+                };
             }
             return optionBtn;
         }
@@ -1276,7 +1363,10 @@ function initialize(game, myPlayerNum, rejoin) {
             myCard.src = msg.role.source;
             game.myRole = msg.role;
             conditions = msg.conditions;
+            powerAvailable = msg.power;
             numShares = msg.shares;
+            if(msg.partner != null)
+                partnerName = players[msg.partner].name;
             updatePlayerInfo();
         }
 
@@ -1297,15 +1387,18 @@ function initialize(game, myPlayerNum, rejoin) {
             updateRoles();
             setupRound();
         }
+        else if(msg.action == 'power') {
+            displayDecision(msg.name, msg.description, msg.type, msg.options, msg.target, true)
+        }
         else if(msg.action == 'pause') {
             if(msg.type == 'private eye') {
-                displayDecision('Private Eye', 'Choose the buried card', msg.type, msg.options, msg.target);
+                displayDecision('Private Eye', 'Choose the buried card', msg.type, msg.options, msg.target, false);
             }
             else if(msg.type == 'gambler') {
-                displayDecision('Gambler', 'Choose the winning team', msg.type, msg.options, msg.target);
+                displayDecision('Gambler', 'Choose the winning team', msg.type, msg.options, msg.target, false);
             }
             else if(msg.type == 'sniper') {
-                displayDecision('Sniper', 'Choose the Target', msg.type, msg.options, msg.target);
+                displayDecision('Sniper', 'Choose the Target', msg.type, msg.options, msg.target, false);
             }
             else {
                 gameUpdate({'action': 'continue'});
