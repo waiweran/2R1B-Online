@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, session
+from flask import render_template, request, redirect, session, url_for
 from online2R1B import app, db, models, cards
 
 import random
@@ -13,8 +13,8 @@ def index():
         code = request.form['code'].upper()
         if code.isalpha() and len(code) == 4 and models.Game.query.filter_by(code=code).first():
             session['code'] = code
-            return redirect('/play')
-        return redirect('/')
+            return redirect(url_for('play'))
+        return redirect(url_for('index'))
     return render_template('index.html')
 
 
@@ -45,14 +45,14 @@ def create():
                               min_players=num_players, expandable=expandable)
         db.session.add(db_game)
         db.session.commit()
-        return redirect('/play')
-
+        return redirect(url_for('play'))
     return render_template('create.html', cards=json.dumps(cards.allCards))
 
 
-@app.route('/test/<toggle>/')
-def test(toggle):
-    return render_template('test.html', toggle=(toggle == 'true'))
+@app.route('/test/')
+def test():
+    session['test'] = True
+    return redirect(url_for('create'))
 
 
 @app.route('/stats/')

@@ -1,35 +1,10 @@
-from flask import request
+from flask import request, session
 from flask_socketio import join_room, leave_room
 from online2R1B import db, socketio, models
 from online2R1B.game import Game, Player, Action
 
 import pickle
 import time
-
-
-@socketio.on('force start')
-def handle_force_start(json):
-    join_room(json['code'])
-    code = json['code']
-    game_entry: models.Game = models.Game.query.filter_by(code=code).first()
-    if game_entry.object is None:
-        players = ['Ike', 'Marth', 'Ness', 'Lucas', 'Samus', 'Link', 'Zelda', 'Shulk', 'Peach', 'Daisy']
-        role_choices = pickle.loads(game_entry.setup)
-        game_obj = Game(players, role_choices)
-        game_obj.next_player = 0
-    else:
-        game_obj = pickle.loads(game_entry.object)
-    next_player = game_obj.next_player
-    game_obj.next_player += 1
-    game_entry.object = pickle.dumps(game_obj)
-    db.session.commit()
-    more = game_obj.next_player < len(game_obj.players)
-    socketio.emit('force start', {'id': game_entry.id, 'num': next_player, 'more': more}, to=code)
-    if not more:
-        game_entry.code = None
-        for p_entry in game_entry.players:
-            db.session.delete(p_entry)
-        db.session.commit()
 
 
 @socketio.on('player appear')
@@ -43,6 +18,12 @@ def handle_player_appear(json):
         'game_id': game_entry.id,
         'players': player_info,
     }, to=request.sid)
+
+    if 'test' in session:
+        names = ['Ike', 'Marth', 'Ness', 'Lucas', 'Samus', 'Link', 'Zelda', 'Shulk', 'Peach', 'Daisy', 'Pyra', 'Mythra',
+                 'Donkey Kong', 'Captain Falcon', 'Yoshi', 'Terry', 'Corrin', 'Robin', 'Byleth', 'Isabelle', 'Gandalf']
+        socketio.emit('open another', {'name': names[len(game_entry.players)],
+                                       'done': len(game_entry.players) < game_entry.min_players - 1}, to=request.sid)
 
 
 @socketio.on('disconnect')
@@ -857,5 +838,5 @@ def process_event(json, game_entry, game_obj: Game, sender):
             }))
 
         elif sender.role.id in ('bluebouncer', 'redbouncer'):
-            target: Player = game_obj.players[json['target']]
+            # target: Player = game_obj.players[json['target']]
             pass  # TODO: implement bouncer

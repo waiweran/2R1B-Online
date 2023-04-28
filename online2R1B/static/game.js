@@ -198,11 +198,6 @@ function createGame() {
 function collectPlayers(code, roleIDs, playerTarget, expandable) {
     document.getElementById("gamebox").style.display = "none";
 
-    // Initiate force start for testing
-    if(getCookie("go") != null) {
-        socket.emit('force start', {"code": code});
-    }
-
     // Join on server
     socket.emit('player appear', {"code": code})
     var gameId = null;
@@ -233,6 +228,7 @@ function collectPlayers(code, roleIDs, playerTarget, expandable) {
             readyBtn.innerHTML = "Not Ready";
             socket.emit('player update', {"code": code, "id": gameId, "sender": playerId, "action": "ready", "status": 1});
         }
+        console.log('ready: ' + isReady)
     }
 
     // Setup game roles view
@@ -318,6 +314,7 @@ function collectPlayers(code, roleIDs, playerTarget, expandable) {
                         isReady = false;
                         readyBtn.innerHTML = "Ready";
                     }
+                    console.log('updated to ready: ' + isReady)
                     break;
                 }
             }
@@ -338,18 +335,15 @@ function collectPlayers(code, roleIDs, playerTarget, expandable) {
         initialize(gameMsg, playerNum, false);
     });
 
-    socket.on('force start', function(msg) {
-        if(playerNum == null) {
-            playerNum = msg.num;
-            gameId = msg.id;
-            if(msg.more) {
+    socket.on('open another', function(msg) {
+        document.getElementById("name").value = msg.name;
+        submitBtn.onclick();
+        setTimeout(function(e) {
+             readyBtn.onclick();
+             if(msg.done) {
                 window.open('/play/');
-            }
-        }
-        if(!msg.more) {
-            document.getElementById('joinbox').style.display = "none";
-            socket.emit('game enter', {'id': gameId, 'sender': playerNum, 'code': code});
-        }
+             }
+        }, 20)
     });
 }
 
