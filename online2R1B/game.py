@@ -20,6 +20,14 @@ class Game:
     current_action: Optional['Action']
 
     def __init__(self, player_names, choices, shuffle=True):
+        """
+        Creates a game object when a new game is started, after players and roles chosen
+        Sets up players and rounds for the game
+        Starts the first round
+        :param player_names: List of names of players in the game
+        :param choices: List of chosen roles
+        :param shuffle: Optional argument to prevent shuffling for deterministic testing
+        """
         self.players = []
         self.num_players = len(player_names)
         self.roles, rooms, self.settings = deal_roles(self.num_players, choices, shuffle)
@@ -150,6 +158,8 @@ class Game:
     def mark_color_share(self, player1: 'Player', player2: 'Player'):
         """
         Records actions involved in color sharing between two players
+        Updates players on share
+        Checks roles swapping based on share
         :param player1:
         :param player2:
         :return: None
@@ -161,6 +171,8 @@ class Game:
     def mark_card_share(self, player1: 'Player', player2: 'Player'):
         """
         Records actions involved in card sharing between two players
+        Updates players on share
+        Checks roles swapping based on share
         :param player1:
         :param player2:
         :return: None
@@ -183,7 +195,8 @@ class Game:
 
     def _check_role_swap(self, player1, player2):
         """
-        Checks if two players' roles swap based on Leprechaun or Hot Potato, and implements swap if needed
+        Checks if two players' roles swap based on Leprechaun or Hot Potato
+        Implements role swap if indicated
         :param player1:
         :param player2:
         :return: None
@@ -272,7 +285,7 @@ class Game:
         """
         Calculates win/loss for each role
         :param early: Indicates whether the game ended early due to Tuesday Knight/Dr. Boom
-        :return: List of booleans indicating win/loss by player number
+        :return: List of booleans indicating win/loss indexed by player number
         """
         nt_index = -1
         president = None
@@ -575,6 +588,13 @@ class Player:
     room_log: List[int]
 
     def __init__(self, name, num, role, room):
+        """
+        Creates a new player model to track game state
+        :param name: Client name
+        :param num: Player number in order joined
+        :param role: Role card assigned to the player
+        :param room: Number of the room the player is in
+        """
         self.name = name
         self.num = num
         self.role = role
@@ -595,6 +615,12 @@ class Player:
         self.room_log = [room]
 
     def mark_card_share(self, player: 'Player') -> List['Action']:
+        """
+        Records player this player card shared with
+        Updates this Player's conditions based on share
+        :param player: The Player that this player shared with
+        :return: List of Actions to be sent to client based on share
+        """
         actions = list()
         self.card_shares.add(player.role.id)
         if not self.first_share:
@@ -682,6 +708,12 @@ class Player:
         return actions
 
     def mark_color_share(self, player: 'Player') -> List['Action']:
+        """
+        Records player this player color shared with
+        Updates this Player's conditions based on share
+        :param player: The Player that this player shared with
+        :return: List of Actions to be sent to client based on share
+        """
         actions = list()
         if not self.first_share:
             self.first_share = player
@@ -701,6 +733,12 @@ class Player:
         return actions
 
     def mark_private_reveal(self, player: 'Player') -> List['Action']:
+        """
+        Records player this player private revealed to
+        Updates the other Player's conditions based on reveal
+        :param player: The Player that this player revealed to
+        :return: List of Actions to be sent to client based on share
+        """
         actions = []
         if self.role.id in ('redpsychologist', 'bluepsychologist'):
             player.conditions.discard('coy')
@@ -718,15 +756,25 @@ class Player:
             }))
         return actions
 
-    def mark_public_reveal(self) -> List['Action']:
-        return []
-
     def mark_permanent_public_reveal(self) -> List['Action']:
+        """
+        Records that this player public revealed permanently
+        :return: List of Actions to be sent to clients based on public reveal (currently none)
+        """
         self.revealed = True
         return []
 
 
 def deal_roles(num_players: int, choices: List[int], shuffle: bool) -> Tuple[List['Role'], List[int], dict]:
+    """
+    Deals roles and organizes players into rooms randomly
+    :param num_players: Number of players in the game
+    :param choices: indices of roles chosen for the game
+    :param shuffle: boolean to stop shuffling for testing purposes
+    :return: List of Roles by player index
+    :return: List of room numbers by player index
+    :return: Dictionary containing settings (bury, drunk, etc)
+    """
     num_roles = num_players
     roles = [
         Role(role_id='president', source='/static/Cards/President.png', team=1),
@@ -837,6 +885,12 @@ class Role:
 class Action:
 
     def __init__(self, recipient, action, blocking=False):
+        """
+        Creates an action to be sent to clients
+        :param recipient: Either a player number, 'room', 'all', or 'server'
+        :param action: Dictionary to be sent to client to perform action
+        :param blocking: Optional boolean to stop further actions until this one resolves
+        """
         self.recipient = recipient
         self.action = action
         self.blocking = blocking

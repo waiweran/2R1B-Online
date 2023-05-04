@@ -9,6 +9,11 @@ import datetime
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    """
+    Used to display home page
+    Accepts Post requests creating new games
+    :return:
+    """
     if request.method == 'POST':
         code = request.form['code'].upper()
         if code.isalpha() and len(code) == 4 and models.Game.query.filter_by(code=code).first():
@@ -20,6 +25,10 @@ def index():
 
 @app.route('/play/')
 def play():
+    """
+    Displays game joining and gameplay page
+    :return:
+    """
     if "code" in session:
         code = session['code']
         game_entry: models.Game = models.Game.query.filter_by(code=code).first()
@@ -31,6 +40,11 @@ def play():
 
 @app.route('/create/', methods=['GET', 'POST'])
 def create():
+    """
+    Displays game creation role selection page
+    Accepts Post requests to finalize role selection and create game
+    :return:
+    """
     if request.method == 'POST':
         letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
         while True:
@@ -51,12 +65,20 @@ def create():
 
 @app.route('/test/')
 def test():
+    """
+    Sets testing variable and redirects to game creation page
+    :return:
+    """
     session['test'] = True
     return redirect(url_for('create'))
 
 
 @app.route('/stats/')
 def stats():
+    """
+    Displays site usage stats page
+    :return:
+    """
     games = models.Game.query.with_entities(models.Game.timestamp,
                                             models.Game.min_players, models.Game.expandable).all()
     return render_template('stats.html', games=games, total=len(games))

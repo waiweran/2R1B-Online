@@ -9,6 +9,13 @@ import time
 
 @socketio.on('player appear')
 def handle_player_appear(json):
+    """
+    Handles initial message from client opening page for a game that has been created
+    Updates database with client info and sends game info to client
+    Includes client auto-opener for UI testing
+    :param json: message from client
+    :return: None
+    """
     join_room(json['code'])
     game_entry: models.Game = models.Game.query.filter_by(code=json['code']).first()
     player_info = list()
@@ -19,6 +26,7 @@ def handle_player_appear(json):
         'players': player_info,
     }, to=request.sid)
 
+    # Auto-opens multiplayer game for UI testing purposes
     if 'test' in session:
         names = ['Ike', 'Marth', 'Ness', 'Lucas', 'Samus', 'Link', 'Zelda', 'Shulk', 'Peach', 'Daisy', 'Pyra', 'Mythra',
                  'Donkey Kong', 'Captain Falcon', 'Yoshi', 'Terry', 'Corrin', 'Robin', 'Byleth', 'Isabelle', 'Gandalf']
@@ -28,6 +36,11 @@ def handle_player_appear(json):
 
 @socketio.on('disconnect')
 def handle_disconnect():
+    """
+    Handles client disconnecting, e.g. closing the software
+    Removes client from game that is recruiting players
+    :return: None
+    """
     player_entry = models.Player.query.get(request.sid)
     if player_entry and player_entry.game.code:
         game_entry = player_entry.game
@@ -57,6 +70,13 @@ def handle_disconnect():
 
 @socketio.on('player update')
 def handle_player_update(json):
+    """
+    Handles all messages related to clients joining a game prior to the game start
+    Updates database representation and determines if the game should start
+    Sends updates to all clients looking at the game
+    :param json: message from the client containing action of either join, ready, or rename
+    :return: None
+    """
     if json['action'] == 'join':
         player_entry = models.Player(sid=request.sid, name=json['name'], game_id=json['id'])
         db.session.add(player_entry)
@@ -95,6 +115,13 @@ def handle_player_update(json):
 
 @socketio.on('game enter')
 def handle_game_enter(json):
+    """
+    Handles player entering a game from the loading screen
+    Updates database with SID for the client for communication purposes
+    Sends game information (including role) to the client
+    :param json: Message from client with game database ID, sender player number, and game code
+    :return: None
+    """
     game_entry: models.Game = models.Game.query.get(json['id'])
     game_obj: Game = pickle.loads(game_entry.object)
     sender = game_obj.players[json['sender']]
@@ -123,6 +150,12 @@ def handle_game_enter(json):
 
 @socketio.on('game reenter')
 def handle_game_reenter(json):
+    """
+    Handles client that disconnected re-entering a game
+    Sends message to client with updates on current game state
+    :param json: Message from client containing game ID and player number
+    :return: None
+    """
     game_entry: models.Game = models.Game.query.get(json['id'])
     if game_entry is not None:
         game_obj: Game = pickle.loads(game_entry.object)
@@ -182,24 +215,43 @@ def handle_game_reenter(json):
 
 @socketio.on('time check')
 def handle_time_check(json):
+    """
+    Handles client requests for system time to synchronize timer
+    Sends message back to client with server time added
+    :param json: Message from client to be returned
+    :return: None
+    """
     json['serverTime'] = int(round(time.time() * 1000))
     socketio.emit('time check', json, to=request.sid)
 
 
 @socketio.on('quick event')
 def handle_quick_event(json):
+    """
+    Handles quick events that need to be forwarded to other clients in a room without updating game state in database
+    :param json: Message from client to be forwarded, including game ID and room to send it to
+    :return: None
+    """
     socketio.emit('quick event', json, to='room_{}_{}'.format(json['id'], json['room']))
 
 
 @socketio.on('game event')
 def handle_game_event(json):
+    """
+    Handles client message to update game state
+    Processes event from client, then updates game based on actions from event
+    :param json: Message from client
+    :return: None
+    """
+
+    # Process event
     game_entry: models.Game = models.Game.query.get(json['id'])
     game_obj: Game = pickle.loads(game_entry.object)
     sender: Player = game_obj.players[json['sender']]
-
     if json['action'] != 'continue':
-        process_event(json, game_entry, game_obj, sender)
+        process_event(json, game_entry.id, game_obj, sender)
 
+    # Run through generated actions in the game object and process them
     game_obj.current_action = None
     if game_obj.actions:
         index = 0
@@ -245,16 +297,37 @@ def handle_game_event(json):
     db.session.commit()
 
 
-def process_event(json, game_entry, game_obj: Game, sender):
+def process_event(json, game_id, game_obj: Game, sender: Player):
+    """
+    Processes an event sent from the client
+    Event actions include:
+     - startround - Updates room membership then sends startround messages to clients, parameter: startTime - time
+     - privatereveal - handles private reveals, parameters: target - player number, type - card or color
+     - publicreveal - handles public reveals, parameters: type - card or color
+     - permanentpublicreveal - handles permanent public reveals and powers associated with permanent reveal
+     - share - Handles sharing, parameters: target - player number, type - card or color
+     - nominate - Handles elections, parameters: target - player number
+     - sendhostages - Handles sending hostages between rooms, parameters: hostages - T/F list indexed by player number
+     - decision - Allows a player must make a decision regarding special powers or win conditions
+       parameters: type - role making a decision, choice - option selected by option index, list if multiple
+     - power - Allows players to activate powers conferred by role, parameters: target - player number (optional)
+    Updates the game state based on the event
+    Adds action updates for clients to the list in the game to be processed and sent out
+    :param json: Message from client
+    :param game_id: ID for the game in the database
+    :param game_obj: Game from the database
+    :param sender: Player whose client sent the event to the server
+    :return: None
+    """
     if json['action'] == 'startround':
         if game_obj.start_time is None:
             for player in game_obj.players:
                 if player.room == 1:
-                    leave_room('room_{}_0'.format(game_entry.id), player.sid)
-                    join_room('room_{}_1'.format(game_entry.id), player.sid)
+                    leave_room('room_{}_0'.format(game_id), player.sid)
+                    join_room('room_{}_1'.format(game_id), player.sid)
                 else:
-                    leave_room('room_{}_1'.format(game_entry.id), player.sid)
-                    join_room('room_{}_0'.format(game_entry.id), player.sid)
+                    leave_room('room_{}_1'.format(game_id), player.sid)
+                    join_room('room_{}_0'.format(game_id), player.sid)
             game_obj.start_time = json['startTime']
             socketio.emit('event response', {
                 'action': 'startround',
@@ -297,7 +370,6 @@ def process_event(json, game_entry, game_obj: Game, sender):
         if 'shy' not in sender.conditions and 'coy' not in sender.conditions and \
                 'savvy' not in sender.conditions and 'paranoid' not in sender.conditions:
             if json['type'] == 'card':
-                game_obj.actions.extend(sender.mark_public_reveal())
                 game_obj.actions.append(Action('room', {
                     'action': 'publicreveal',
                     'target': sender.num,
