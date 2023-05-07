@@ -41,7 +41,6 @@ def handle_disconnect():
     Removes client from game that is recruiting players
     :return: None
     """
-    print('Disconnect registered')
     player_entry = models.Player.query.get(request.sid)
     if player_entry and player_entry.game.code:
         game_entry = player_entry.game

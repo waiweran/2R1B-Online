@@ -354,7 +354,8 @@ function rejoinGame(gameId) {
         document.getElementById('gamebox').style.display = "";
         initialize(gameMsg, playerNum, true);
     });
-    if(playerNum != null) {
+    console.log(playerNum);
+    if(playerNum >= 0) {
         socket.emit('game reenter', {"id": gameId, "sender": playerNum})
     }
     else {
