@@ -228,7 +228,6 @@ function collectPlayers(code, roleIDs, playerTarget, expandable) {
             readyBtn.innerHTML = "Not Ready";
             socket.emit('player update', {"code": code, "id": gameId, "sender": playerId, "action": "ready", "status": 1});
         }
-        console.log('ready: ' + isReady)
     }
 
     // Setup game roles view
@@ -314,7 +313,6 @@ function collectPlayers(code, roleIDs, playerTarget, expandable) {
                         isReady = false;
                         readyBtn.innerHTML = "Ready";
                     }
-                    console.log('updated to ready: ' + isReady)
                     break;
                 }
             }
@@ -341,23 +339,22 @@ function collectPlayers(code, roleIDs, playerTarget, expandable) {
         setTimeout(function(e) {
              readyBtn.onclick();
              if(msg.done) {
-                window.open('/play/');
+                window.open(window.location.href);
              }
         }, 20)
     });
 }
 
 
-function rejoinGame() {
+function rejoinGame(gameId) {
     document.getElementById('joinbox').style.display = "none";
     document.getElementById('gamebox').style.display = "none";
-    var gameId = getCookie('id');
-    var playerNum = parseInt(getCookie('num'));
+    var playerNum = parseInt((new URL(window.location.href)).searchParams.get("p"));
     socket.on('game rejoin', function(gameMsg) {
         document.getElementById('gamebox').style.display = "";
         initialize(gameMsg, playerNum, true);
     });
-    if(gameId != null && playerNum != null) {
+    if(playerNum != null) {
         socket.emit('game reenter', {"id": gameId, "sender": playerNum})
     }
     else {
@@ -368,9 +365,10 @@ function rejoinGame() {
 
 function initialize(game, myPlayerNum, rejoin) {
     
-    // Set cookies for rejoining
-    setCookie('id', game.id, 1);
-    setCookie('num', myPlayerNum, 1);
+    // Set parameter for rejoining
+    const url = new URL(window.location.href);
+    url.searchParams.set('p', myPlayerNum);
+    window.history.replaceState(null, null, url);
 
     // Set time offset
     var timeOffset = 0;
@@ -1405,29 +1403,4 @@ function initialize(game, myPlayerNum, rejoin) {
             endGame(msg.info);
         }
     }
-}
-
-
-function setCookie(cname, cvalue, exdays) {
-    var d = new Date();
-    d.setTime(d.getTime() + (exdays*24*60*60*1000));
-    var expires = "expires="+ d.toUTCString();
-    document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
-}
-
-
-function getCookie(cname) {
-    var name = cname + "=";
-    var decodedCookie = decodeURIComponent(document.cookie);
-    var ca = decodedCookie.split(';');
-    for(var i = 0; i <ca.length; i++) {
-        var c = ca[i];
-        while (c.charAt(0) == ' ') {
-            c = c.substring(1);
-        }
-        if (c.indexOf(name) == 0) {
-            return c.substring(name.length, c.length);
-        }
-    }
-    return null;
 }

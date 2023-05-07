@@ -13,13 +13,12 @@
 			<input id="submit" type="submit" value="Go">
 		</form>
 		<br>
-		<a id="create" href="/create/">Create Game</a>
+		<a id="create" href="{{ url_for('create') }}">Create Game</a>
 	</div>
-	<div id="rejoin">
-		Game by <a href="https://www.tuesdayknightgames.com/">Tuesday Knight Games</a> &nbsp | &nbsp <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons License BY–NC–SA 4.0</a>
-		<br>
-		<br>
-		<a href="/play/">Rejoin Last Game</a>
+	<div id="credits">
+		Game by <a href="https://www.tuesdayknightgames.com/">Tuesday Knight Games</a>
+		&nbsp | &nbsp
+		<a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons License BY–NC–SA 4.0</a>
 	</div>
 </body>
 <style>
@@ -83,7 +82,7 @@
 		background-color: #d0d0d0;
 		outline: none;
 	}
-	#rejoin {
+	#credits {
 		position: fixed;
 		width: 90%;
   		top: 90%;
@@ -94,7 +93,7 @@
 		font-size: 18px;
 		text-transform: uppercase;
 	}
-	#rejoin a {
+	#credits a {
 		color: #989898;
 		font-size: 18px;
 		text-transform: uppercase;

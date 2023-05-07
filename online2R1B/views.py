@@ -16,26 +16,28 @@ def index():
     """
     if request.method == 'POST':
         code = request.form['code'].upper()
-        if code.isalpha() and len(code) == 4 and models.Game.query.filter_by(code=code).first():
-            session['code'] = code
-            return redirect(url_for('play'))
+        if code.isalpha() and len(code) == 4:
+            game_entry = models.Game.query.filter_by(code=code).first()
+            if game_entry:
+                return redirect(url_for('play', game_id=game_entry.id))
         return redirect(url_for('index'))
     return render_template('index.html')
 
 
-@app.route('/play/')
-def play():
+@app.route('/<game_id>/')
+def play(game_id):
     """
-    Displays game joining and gameplay page
+    Displays the main game and join screen
+    :param game_id: database ID of the game
     :return:
     """
-    if "code" in session:
-        code = session['code']
-        game_entry: models.Game = models.Game.query.filter_by(code=code).first()
-        if code.isalpha() and len(code) == 4 and game_entry:
-            return render_template('game.html', code=code, roles=pickle.loads(game_entry.setup), game_info=game_entry,
-                                   cards=json.dumps(cards.allCards))
-    return render_template('game.html', rejoin=True)
+    game_entry: models.Game = models.Game.query.get(game_id)
+    if game_entry:
+        if not game_entry.object:
+            return render_template('game.html', roles=pickle.loads(game_entry.setup), game_info=game_entry)
+        else:
+            return render_template('game.html', rejoin=True, game_info=game_entry)
+    return redirect(url_for('index'))
 
 
 @app.route('/create/', methods=['GET', 'POST'])
@@ -51,7 +53,6 @@ def create():
             code = random.choice(letters) + random.choice(letters) + random.choice(letters) + random.choice(letters)
             if not models.Game.query.filter_by(code=code).first():
                 break
-        session['code'] = code
         setup = json.loads(request.form['roles'])
         num_players = request.form['numplayers']
         expandable = request.form['expand'] == 'true'
@@ -59,7 +60,7 @@ def create():
                               min_players=num_players, expandable=expandable)
         db.session.add(db_game)
         db.session.commit()
-        return redirect(url_for('play'))
+        return redirect(url_for('play', game_id=db_game.id))
     return render_template('create.html', cards=json.dumps(cards.allCards))
 
 
