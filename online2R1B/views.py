@@ -81,5 +81,5 @@ def stats():
     :return:
     """
     games = models.Game.query.with_entities(models.Game.timestamp,
-                                            models.Game.min_players, models.Game.expandable).all()
+                                            models.Game.min_players, models.Game.expandable, models.Game.ended).all()
     return render_template('stats.html', games=games, total=len(games))

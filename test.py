@@ -506,7 +506,6 @@ class TestLeadershipCards(unittest.TestCase):
         }
         responses.process_event(json, None, game_obj, sender=game_obj.players[9])
 
-
         # Trigger Round 2 End
         json = {
             'action': 'sendhostages',
@@ -824,3 +823,67 @@ class TestShareCards(unittest.TestCase):
         self.assertTrue(winners[3])  # Robot 2 (President)
         self.assertFalse(winners[4])  # Robot 3 (None)
         self.assertFalse(winners[7])  # Robot 4 (Clone)
+
+
+class TestEndingCards(unittest.TestCase):
+
+    def test_tuesday_knight(self):
+        players = ['Ike', 'Marth', 'Ness', 'Lucas', 'Samus', 'Link', 'Zelda', 'Shulk', 'Peach', 'Daisy']
+        role_choices = [39, 1, 0, 0]
+        game_obj = game.Game(players, role_choices, shuffle=False)
+
+        # Bomber and Tuesday Knight share
+        json = {
+            'action': 'share',
+            'type': 'card',
+            'target': 2,
+        }
+        responses.process_event(json, None, game_obj, sender=game_obj.players[1])
+        json = {
+            'action': 'share',
+            'type': 'card',
+            'target': 1,
+        }
+        responses.process_event(json, None, game_obj, sender=game_obj.players[2])
+
+        # Tuesday Knight shared with Bomber
+        winners = game_obj.calc_winners()
+        self.assertEqual(len(game_obj.players), len(winners))
+        for i in range(len(game_obj.players)):
+            player = game_obj.players[i]
+            win = winners[i]
+            if player.role.team == 1:  # Blue Team
+                self.assertTrue(win)
+            elif player.role.team == 2:  # Red Team
+                self.assertFalse(win)
+
+    def test_dr_boom(self):
+
+        players = ['Ike', 'Marth', 'Ness', 'Lucas', 'Samus', 'Link', 'Zelda', 'Shulk', 'Peach', 'Daisy']
+        role_choices = [39, 1, 0, 0]
+        game_obj = game.Game(players, role_choices, shuffle=False)
+
+        # President and Dr. Boom share
+        json = {
+            'action': 'share',
+            'type': 'card',
+            'target': 3,
+        }
+        responses.process_event(json, None, game_obj, sender=game_obj.players[0])
+        json = {
+            'action': 'share',
+            'type': 'card',
+            'target': 0,
+        }
+        responses.process_event(json, None, game_obj, sender=game_obj.players[3])
+
+        # Dr. Boom shared with President
+        winners = game_obj.calc_winners()
+        self.assertEqual(len(game_obj.players), len(winners))
+        for i in range(len(game_obj.players)):
+            player = game_obj.players[i]
+            win = winners[i]
+            if player.role.team == 1:  # Blue Team
+                self.assertFalse(win)
+            elif player.role.team == 2:  # Red Team
+                self.assertTrue(win)

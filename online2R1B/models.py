@@ -16,4 +16,5 @@ class Game(db.Model):
     setup = db.Column(db.PickleType)
     min_players = db.Column(db.Integer)
     expandable = db.Column(db.Boolean)
+    ended = db.Column(db.Boolean)
     object = db.Column(db.PickleType)

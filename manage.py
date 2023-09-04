@@ -11,4 +11,5 @@ elif sys.argv[1] == 'runserver':
 
 elif sys.argv[1] == 'setupdb':
 	print('Creating tables')
-	db.create_all()
+	with app.app_context():
+		db.create_all()

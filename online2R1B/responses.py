@@ -264,6 +264,7 @@ def handle_game_event(json):
                 if action.recipient == 'server':
                     if action.action == 'endgame':
                         game_obj.end_game()
+                        game_entry.ended = True
                 elif action.recipient == 'all':
                     for sub_list in player_updates:
                         sub_list.append(action.action)

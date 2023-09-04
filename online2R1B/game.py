@@ -185,13 +185,13 @@ class Game:
             for player in self.players:
                 if player.room == player1.room and 'immune' not in player.conditions:
                     player.conditions.add('dead')
-            self.end_game(early=True)
+            self.actions.append(Action('server', 'endgame'))
         elif player1.role.id == 'tuesdayknight' and player2.role.id == 'bomber' or \
                 player2.role.id == 'tuesdayknight' and player1.role.id == 'bomber':
             for player in self.players:
                 if player.room == player1.room and player.role.id != 'president' and 'immune' not in player.conditions:
                     player.conditions.add('dead')
-            self.end_game(early=True)
+            self.actions.append(Action('server', 'endgame'))
 
     def _check_role_swap(self, player1, player2):
         """
@@ -261,14 +261,13 @@ class Game:
         self.leaders[room] = player_num
         self.leader_log[self.round][room].append((player_num, usurped))
 
-    def end_game(self, early=False):
+    def end_game(self):
         """
         Ends game and sends winner information to clients
-        :param early: Indicates whether the game ended early due to Tuesday Knight/Dr. Boom
         :return: None
         """
         info = list()
-        winners = self.calc_winners(early)
+        winners = self.calc_winners()
         for player in self.players:
             info.append({
                 'room': player.room,
@@ -281,20 +280,25 @@ class Game:
             'info': info,
         }, blocking=True))
 
-    def calc_winners(self, early=False) -> List[bool]:
+    def calc_winners(self) -> List[bool]:
         """
         Calculates win/loss for each role
-        :param early: Indicates whether the game ended early due to Tuesday Knight/Dr. Boom
         :return: List of booleans indicating win/loss indexed by player number
         """
         nt_index = -1
         president = None
         bomber = None
+        tuesday_knight = None
+        dr_boom = None
         for player in self.players:
             if player.role.id == 'president':
                 president = player
-            if player.role.id == 'bomber':
+            elif player.role.id == 'bomber':
                 bomber = player
+            elif player.role.id == 'tuesdayknight':
+                tuesday_knight = player
+            elif player.role.id == 'drboom':
+                dr_boom = player
         if president is None:
             for player in self.players:
                 if player.role.id == 'presidentsdaughter':
@@ -303,8 +307,9 @@ class Game:
             for player in self.players:
                 if player.role.id == 'martyr':
                     bomber = player
-        if early:
-            pass  # Tuesday Knight and Dr. Boom perform game-end changes separately
+
+        if tuesday_knight and 'bomber' in tuesday_knight.card_shares or dr_boom and 'president' in dr_boom.card_shares:
+            pass  # Tuesday Knight and Dr. Boom negate regular game-end changes
         else:
             if 'ill' in president.conditions:
                 if not self.settings['bury'] or \

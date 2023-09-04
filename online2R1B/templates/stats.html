@@ -10,7 +10,8 @@
 		<br>
 		<br>
 		{% for game in games %}
-			<p>{{ game.0 }} &nbsp&nbsp | &nbsp&nbsp {{ game.1 }}{% if game.2 %}+{% endif %}</p>
+			<p>{{ game.0 }} &nbsp&nbsp | &nbsp&nbsp {{ game.1 }}{% if game.2 %}+{% endif %} &nbsp&nbsp | &nbsp&nbsp
+				{% if game.3 %}completed{% else %}incomplete{% endif %}</p>
 		{% endfor %}
 	</div>
 </body>
