@@ -424,6 +424,11 @@ def process_event(json, game_id, game_obj: Game, sender: Player):
 
     elif json['action'] == 'share':
         target: Player = game_obj.players[json['target']]
+        former_target = None
+        if sender.color_share is not None:
+            former_target = game_obj.players[sender.color_share]
+        elif sender.card_share is not None:
+            former_target = game_obj.players[sender.card_share]
         if json['type'] == 'color':
             sender.card_share = None
             if 'shy' in sender.conditions or 'savvy' in sender.conditions or \
@@ -475,6 +480,7 @@ def process_event(json, game_id, game_obj: Game, sender: Player):
                 sender.card_share = target.num
         sender_incoming = list()
         target_incoming = list()
+        former_target_incoming = list()
         for player in game_obj.players:
             if player.card_share == sender.num:
                 sender_incoming.append({'type': 'card', 'sender': player.num})
@@ -484,6 +490,12 @@ def process_event(json, game_id, game_obj: Game, sender: Player):
                 target_incoming.append({'type': 'card', 'sender': player.num})
             if player.color_share == target.num:
                 target_incoming.append({'type': 'color', 'sender': player.num})
+            if former_target:
+                if player.card_share == former_target.num:
+                    former_target_incoming.append({'type': 'card', 'sender': player.num})
+                if player.color_share == former_target.num:
+                    former_target_incoming.append({'type': 'color', 'sender': player.num})
+
         game_obj.actions.append(Action(sender.num, {
             'action': 'shareupdate',
             'incoming': sender_incoming,
@@ -496,6 +508,13 @@ def process_event(json, game_id, game_obj: Game, sender: Player):
             'colorout': target.color_share,
             'cardout': target.card_share,
         }))
+        if former_target:
+            game_obj.actions.append(Action(former_target.num, {
+                'action': 'shareupdate',
+                'incoming': former_target_incoming,
+                'colorout': former_target.color_share,
+                'cardout': former_target.card_share,
+            }))
 
     elif json['action'] == 'nominate':
         target: Player = game_obj.players[json['target']]

@@ -341,7 +341,7 @@ function collectPlayers(code, roleIDs, playerTarget, expandable) {
              if(msg.done) {
                 window.open(window.location.href);
              }
-        }, 20)
+        }, 50)
     });
 }
 
@@ -349,7 +349,7 @@ function collectPlayers(code, roleIDs, playerTarget, expandable) {
 function rejoinGame(gameId) {
     document.getElementById('joinbox').style.display = "none";
     document.getElementById('gamebox').style.display = "none";
-    var playerNum = parseInt((new URL(window.location.href)).searchParams.get("p"));
+    var playerNum = parseInt((new URL(window.location.href)).searchParams.get("p"))/(parseInt(gameId)*4643%3011) - 1;
     socket.on('game rejoin', function(gameMsg) {
         document.getElementById('gamebox').style.display = "";
         initialize(gameMsg, playerNum, true);
@@ -368,7 +368,7 @@ function initialize(game, myPlayerNum, rejoin) {
     
     // Set parameter for rejoining
     const url = new URL(window.location.href);
-    url.searchParams.set('p', myPlayerNum);
+    url.searchParams.set('p', (myPlayerNum+1)*(parseInt(game.id)*4643%3011));
     window.history.replaceState(null, null, url);
 
     // Set time offset

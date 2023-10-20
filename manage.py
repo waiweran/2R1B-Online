@@ -10,8 +10,8 @@ elif sys.argv[1] == 'runserver':
 	socketio.run(app, debug=True)
 
 elif sys.argv[1] == 'pubserver':
-	print('Running server')
-	socketio.run(app)
+	print('Publishing server')
+	socketio.run(app, host='0.0.0.0', port=80)
 
 elif sys.argv[1] == 'setupdb':
 	print('Creating tables')
