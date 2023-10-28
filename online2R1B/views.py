@@ -53,6 +53,12 @@ def create():
             code = random.choice(letters) + random.choice(letters) + random.choice(letters) + random.choice(letters)
             if not models.Game.query.filter_by(code=code).first():
                 break
+            else:
+                game_conflict: models.Game = models.Game.query.filter_by(code=code).first()
+                if datetime.datetime.now() - game_conflict.timestamp > datetime.timedelta(days=2):
+                    game_conflict.code = None
+                    break
+
         setup = json.loads(request.form['roles'])
         num_players = request.form['numplayers']
         expandable = request.form['expand'] == 'true'
@@ -80,6 +86,6 @@ def stats():
     Displays site usage stats page
     :return:
     """
-    games = models.Game.query.with_entities(models.Game.timestamp,
-                                            models.Game.min_players, models.Game.expandable, models.Game.ended).all()
+    games = models.Game.query.with_entities(models.Game.timestamp,models.Game.min_players,
+                                            models.Game.expandable, models.Game.started, models.Game.ended).all()
     return render_template('stats.html', games=games, total=len(games))

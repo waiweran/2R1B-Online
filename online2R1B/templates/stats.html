@@ -11,7 +11,7 @@
 		<br>
 		{% for game in games %}
 			<p>{{ game.0 }} &nbsp&nbsp | &nbsp&nbsp {{ game.1 }}{% if game.2 %}+{% endif %} &nbsp&nbsp | &nbsp&nbsp
-				{% if game.3 %}completed{% else %}incomplete{% endif %}</p>
+				{% if game.3 and game.4 %}completed{% elif game.3 %}incomplete{% else %}not started{% endif %}</p>
 		{% endfor %}
 	</div>
 </body>

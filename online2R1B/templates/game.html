@@ -97,6 +97,7 @@
 			<div id="victoryroom2"></div>
 		</div>
 	</div>
+	<p id="code">Game Code: {{ game_info.code }}</p>
 </body>
 <style>
 	body {
@@ -247,6 +248,9 @@
 	}
 	#rolesbox span label.rightjust {
 		float: right;
+	}
+	#rejoinnames button {
+		margin: 10px;
 	}
 
 	#myroom {
@@ -419,6 +423,17 @@
 		position: absolute;
 		transform: translate(-50%);
 		border-radius: 10px;
+	}
+
+	#code {
+		position: fixed;
+		width: 100px;
+  		top: 100%;
+  		left: 100%;
+  		transform: translate(-100%, -140%);
+		color: #333333;
+		font-size: 12px;
+		padding: 5px;
 	}
 
 </style>
