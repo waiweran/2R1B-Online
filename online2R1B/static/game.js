@@ -1,8 +1,8 @@
 "use strict"
 
-var socket = io();
+const socket = io();
 
-var allCards = [
+const allCards = [
     {"name1": "Doctor", "name3": "Engineer", "class": "blueredteam", "num": 2, "id": 1},
     {"name1": "Blue Spy", "name3": "Red Spy", "class": "blueredteam", "num": 2, "id": 2},
     {"name1": "Coy Boy", "name3": "Coy Boy", "class": "blueredteam", "num": 2, "id": 3},
@@ -195,8 +195,9 @@ function createGame() {
 }
 
 
-function collectPlayers(code, roleIDs, playerTarget, expandable) {
+function collectPlayers(code, roleIDs, playerTarget, expandable, hidePVal) {
     document.getElementById("gamebox").style.display = "none";
+    document.getElementById("rejoinbox").style.display = "none";
 
     // Join on server
     socket.emit('player appear', {"code": code})
@@ -330,7 +331,7 @@ function collectPlayers(code, roleIDs, playerTarget, expandable) {
 
     socket.on('game enter', function(gameMsg) {
         document.getElementById('gamebox').style.display = "";
-        initialize(gameMsg, playerNum, false);
+        initialize(gameMsg, playerNum, false, hidePVal);
     });
 
     socket.on('open another', function(msg) {
@@ -349,27 +350,72 @@ function collectPlayers(code, roleIDs, playerTarget, expandable) {
 function rejoinGame(gameId) {
     document.getElementById('joinbox').style.display = "none";
     document.getElementById('gamebox').style.display = "none";
-    var playerNum = parseInt((new URL(window.location.href)).searchParams.get("p"))/(parseInt(gameId)*4643%3011) - 1;
-    socket.on('game rejoin', function(gameMsg) {
-        document.getElementById('gamebox').style.display = "";
-        initialize(gameMsg, playerNum, true);
-    });
-    console.log(playerNum);
-    if(playerNum >= 0) {
+    document.getElementById('rejoinbox').style.display = "none";
+    var playerCode = null;
+    var hidePVal = true;
+    const pCookie = getCookie("p");
+    if(pCookie != null) {
+        playerCode = parseInt(pCookie);
+    }
+    else {
+        const urlParams = (new URL(window.location.href)).searchParams;
+        if(urlParams.has("p")) {
+            playerCode = parseInt(urlParams.get("p"));
+            hidePVal = false;
+        }
+    }
+    if(playerCode != null) {
+        const playerNum = playerCode/(parseInt(gameId)*4643%3011) - 1;
+        socket.on('game rejoin', function(gameMsg) {
+            if(gameMsg.fail) {
+                window.location.replace("/");
+            }
+            document.getElementById('gamebox').style.display = "";
+            initialize(gameMsg, playerNum, true, hidePVal);
+        });
         socket.emit('game reenter', {"id": gameId, "sender": playerNum})
     }
     else {
-        window.location.replace("/");
+        socket.on('game names list', function(gameMsg) {
+            document.getElementById('rejoinbox').style.display = "";
+            const playerButtonArea = document.getElementById('rejoinnames');
+            for(const [key, value] of Object.entries(gameMsg.names)) {
+                var rejoinBtn = document.createElement('BUTTON');
+                rejoinBtn.innerHTML = key;
+                rejoinBtn.onclick = function(e) {
+                    console.log('FUCKIN SHIT');
+                    console.log(key);
+                    console.log(value);
+                    socket.on('game rejoin', function(gameMsg) {
+                        if(gameMsg.fail) {
+                            window.location.replace("/");
+                        }
+                        document.getElementById('rejoinbox').style.display = "none";
+                        document.getElementById('gamebox').style.display = "";
+                        initialize(gameMsg, value, true, hidePVal);
+                    });
+                    socket.emit('game reenter', {"id": gameId, "sender": value})
+                };
+                playerButtonArea.appendChild(rejoinBtn);
+            }
+        });
+        socket.emit('game reenter', {"id": gameId, "sender": "unknown"})
     }
 }
 
 
-function initialize(game, myPlayerNum, rejoin) {
+function initialize(game, myPlayerNum, rejoin, hidePVal) {
     
     // Set parameter for rejoining
     const url = new URL(window.location.href);
-    url.searchParams.set('p', (myPlayerNum+1)*(parseInt(game.id)*4643%3011));
-    window.history.replaceState(null, null, url);
+    const playerCode = (myPlayerNum+1)*(parseInt(game.id)*4643%3011);
+    if(hidePVal) {
+        setCookie("p", playerCode, 1);
+    }
+    else {
+        url.searchParams.set('p', playerCode);
+        window.history.replaceState(null, null, url);
+    }
 
     // Set time offset
     var timeOffset = 0;
@@ -1404,4 +1450,29 @@ function initialize(game, myPlayerNum, rejoin) {
             endGame(msg.info);
         }
     }
+}
+
+
+function setCookie(cname, cvalue, exdays) {
+    var d = new Date();
+    d.setTime(d.getTime() + (exdays*24*60*60*1000));
+    var expires = "expires="+ d.toUTCString();
+    document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+}
+
+
+function getCookie(cname) {
+    var name = cname + "=";
+    var decodedCookie = decodeURIComponent(document.cookie);
+    var ca = decodedCookie.split(';');
+    for(var i = 0; i <ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+        }
+        if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+        }
+    }
+    return null;
 }

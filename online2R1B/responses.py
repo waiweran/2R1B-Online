@@ -39,33 +39,36 @@ def handle_disconnect():
     """
     Handles client disconnecting, e.g. closing the software
     Removes client from game that is recruiting players
+    Lists players for reconnection in game that has already started
     :return: None
     """
     player_entry = models.Player.query.get(request.sid)
-    if player_entry and player_entry.game.code:
+    if player_entry:
         game_entry = player_entry.game
         db.session.delete(player_entry)
         db.session.commit()
-        player_info = list()
-        player_names = list()
-        all_ready = game_entry.min_players == len(game_entry.players) or \
-            (game_entry.min_players < len(game_entry.players) and game_entry.expandable)
-        for player in game_entry.players:
-            player_info.append({'id': player.sid, 'name': player.name, 'ready': player.ready})
-            player_names.append(player.name)
-            all_ready = all_ready and player.ready
-        socketio.emit('player update', {
-            'action': 'updatelist',
-            'players': player_info,
-            'start': all_ready
-        }, to=game_entry.code)
-        if all_ready:
-            role_choices = pickle.loads(game_entry.setup)
-            game_entry.object = pickle.dumps(Game(player_names, role_choices))
-            game_entry.code = None
-            for p_entry in game_entry.players:
-                db.session.delete(p_entry)
-            db.session.commit()
+        if not player_entry.game.started:
+            # Player was in joining area of game
+            player_info = list()
+            player_names = list()
+            all_ready = game_entry.min_players == len(game_entry.players) or \
+                (game_entry.min_players < len(game_entry.players) and game_entry.expandable)
+            for player in game_entry.players:
+                player_info.append({'id': player.sid, 'name': player.name, 'ready': player.ready})
+                player_names.append(player.name)
+                all_ready = all_ready and player.ready
+            socketio.emit('player update', {
+                'action': 'updatelist',
+                'players': player_info,
+                'start': all_ready
+            }, to=game_entry.code)
+            if all_ready:
+                role_choices = pickle.loads(game_entry.setup)
+                game_entry.object = pickle.dumps(Game(player_names, role_choices))
+                game_entry.started = True
+                db.session.commit()
+        elif not player_entry.game.ended:
+            pass  # Player was in game that started
 
 
 @socketio.on('player update')
@@ -107,9 +110,7 @@ def handle_player_update(json):
     if all_ready:
         role_choices = pickle.loads(game_entry.setup)
         game_entry.object = pickle.dumps(Game(player_names, role_choices))
-        game_entry.code = None
-        for p_entry in game_entry.players:
-            db.session.delete(p_entry)
+        game_entry.started = True
         db.session.commit()
 
 
@@ -152,66 +153,81 @@ def handle_game_enter(json):
 def handle_game_reenter(json):
     """
     Handles client that disconnected re-entering a game
+    Sends list of disconnected player names when player number lost
     Sends message to client with updates on current game state
     :param json: Message from client containing game ID and player number
     :return: None
     """
     game_entry: models.Game = models.Game.query.get(json['id'])
-    if game_entry is not None:
+    print(json)
+    if game_entry is not None and not game_entry.ended:
         game_obj: Game = pickle.loads(game_entry.object)
-        sender = game_obj.players[json['sender']]
-        sender.sid = request.sid
-        game_entry.object = pickle.dumps(game_obj)
-        db.session.commit()
-        join_room('room_{}'.format(json['id']))
-        players = list()
-        for player in game_obj.players:
-            share_status = None
-            if player.card_share == sender.num:
-                share_status = 'card'
-            elif player.color_share == sender.num:
-                share_status = 'color'
-            role = None
-            if player.revealed and player.room == sender.room:
-                role = player.role.source
-            players.append({
-                'name': player.name,
-                'room': player.room,
-                'role': role,
-                'share': share_status,
-                'votes': player.votes,
-            })
-        if game_obj.round >= len(game_obj.rounds):
-            round_time = game_obj.rounds[-1]['time']
-            round_hostages = game_obj.rounds[-1]['hostages']
+        if json['sender'] == 'unknown':
+            online_names = set()
+            offline_names = dict()
+            for player in game_entry.players:
+                online_names.add(player.name)
+            for player in game_obj.players:
+                if player.name not in online_names:
+                    offline_names[player.name] = player.num
+            socketio.emit('game names list', {'names': offline_names}, to=request.sid)
         else:
-            round_time = game_obj.rounds[game_obj.round]['time']
-            round_hostages = game_obj.rounds[game_obj.round]['hostages']
-        current_action = None
-        if game_obj.current_action is not None:
-            if game_obj.current_action.recipient in ('all', sender.sid):
-                current_action = game_obj.current_action.action
-        rooms_sending_hostages = list()
-        for hostage_info in game_obj.rooms_sending_hostages:
-            rooms_sending_hostages.append(hostage_info['room'])
-        socketio.emit('game rejoin', {
-            'id': game_entry.id,
-            'numPlayers': game_obj.num_players,
-            'myRole': {'id': sender.role.id, 'source': sender.role.source},
-            'myConditions': list(sender.conditions),
-            'players': players,
-            'round': len(game_obj.rounds) - game_obj.round,
-            'time': round_time,
-            'numHostages': round_hostages,
-            'startTime': game_obj.start_time,
-            'sentHostages': rooms_sending_hostages,
-            'leader': game_obj.leaders[sender.room],
-            'myShare': {'card': sender.card_share, 'color': sender.color_share},
-            'myVotes': list(sender.my_votes),
-            'myShareCount': len(sender.card_shares),
-            'currentAction': current_action,
-        }, to=sender.sid)
-
+            sender = game_obj.players[json['sender']]
+            player_entry = models.Player(sid=request.sid, name=sender.name, game_id=json['id'])
+            db.session.add(player_entry)
+            sender.sid = request.sid
+            game_entry.object = pickle.dumps(game_obj)
+            db.session.commit()
+            join_room('room_{}'.format(json['id']))
+            players = list()
+            for player in game_obj.players:
+                share_status = None
+                if player.card_share == sender.num:
+                    share_status = 'card'
+                elif player.color_share == sender.num:
+                    share_status = 'color'
+                role = None
+                if player.revealed and player.room == sender.room:
+                    role = player.role.source
+                players.append({
+                    'name': player.name,
+                    'room': player.room,
+                    'role': role,
+                    'share': share_status,
+                    'votes': player.votes,
+                })
+            if game_obj.round >= len(game_obj.rounds):
+                round_time = game_obj.rounds[-1]['time']
+                round_hostages = game_obj.rounds[-1]['hostages']
+            else:
+                round_time = game_obj.rounds[game_obj.round]['time']
+                round_hostages = game_obj.rounds[game_obj.round]['hostages']
+            current_action = None
+            if game_obj.current_action is not None:
+                if game_obj.current_action.recipient in ('all', sender.sid):
+                    current_action = game_obj.current_action.action
+            rooms_sending_hostages = list()
+            for hostage_info in game_obj.rooms_sending_hostages:
+                rooms_sending_hostages.append(hostage_info['room'])
+            socketio.emit('game rejoin', {
+                'id': game_entry.id,
+                'numPlayers': game_obj.num_players,
+                'myRole': {'id': sender.role.id, 'source': sender.role.source},
+                'myConditions': list(sender.conditions),
+                'players': players,
+                'round': len(game_obj.rounds) - game_obj.round,
+                'time': round_time,
+                'numHostages': round_hostages,
+                'startTime': game_obj.start_time,
+                'sentHostages': rooms_sending_hostages,
+                'leader': game_obj.leaders[sender.room],
+                'myShare': {'card': sender.card_share, 'color': sender.color_share},
+                'myVotes': list(sender.my_votes),
+                'myShareCount': len(sender.card_shares),
+                'currentAction': current_action,
+            }, to=sender.sid)
+    else:
+        socketio.emit('game rejoin', {'fail': True}, to=request.sid)
 
 @socketio.on('time check')
 def handle_time_check(json):
@@ -265,6 +281,7 @@ def handle_game_event(json):
                     if action.action == 'endgame':
                         game_obj.end_game()
                         game_entry.ended = True
+                        game_entry.code = None
                 elif action.recipient == 'all':
                     for sub_list in player_updates:
                         sub_list.append(action.action)

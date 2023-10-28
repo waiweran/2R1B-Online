@@ -9,7 +9,8 @@
 	{% if rejoin %}
 		onload='rejoinGame("{{ game_info.id }}")'
 	{% else %}
-		onload='collectPlayers("{{ game_info.code }}", JSON.parse("{{ roles }}"), parseInt("{{ game_info.min_players }}"), "{{ game_info.expandable }}" == "True")'
+		onload='collectPlayers("{{ game_info.code }}", JSON.parse("{{ roles }}"), parseInt("{{ game_info.min_players }}"),
+		"{{ game_info.expandable }}" == "True", "{{ session.test }}" == "False")'
 	{% endif %}
 	>
 	<div id="joinbox">
@@ -31,6 +32,12 @@
 				<label class="leftjust">President</label>
 				<label class="rightjust">Bomber</label>
 			</span>
+		</div>
+	</div>
+	<div id="rejoinbox">
+		<h1>Game: {{ game_info.code }}</h1>
+		<h3>Click Your Name</h3>
+		<div id="rejoinnames">
 		</div>
 	</div>
 	<div id="gamebox">
@@ -155,7 +162,7 @@
 		color: #909090;
 		outline: none;
 	}
-	#joinbox {
+	#joinbox, #rejoinbox {
 		position: fixed;
   		top: 50%;
   		left: 50%;
