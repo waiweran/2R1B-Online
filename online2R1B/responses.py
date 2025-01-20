@@ -159,7 +159,6 @@ def handle_game_reenter(json):
     :return: None
     """
     game_entry: models.Game = models.Game.query.get(json['id'])
-    print(json)
     if game_entry is not None and not game_entry.ended:
         game_obj: Game = pickle.loads(game_entry.object)
         if json['sender'] == 'unknown':
@@ -211,6 +210,9 @@ def handle_game_reenter(json):
             rooms_sending_hostages = list()
             for hostage_info in game_obj.rooms_sending_hostages:
                 rooms_sending_hostages.append(hostage_info['room'])
+            partner = ''
+            if sender.partner is not None:
+                partner = game_obj.players[sender.partner].name
             socketio.emit('game rejoin', {
                 'id': game_entry.id,
                 'numPlayers': game_obj.num_players,
@@ -226,6 +228,8 @@ def handle_game_reenter(json):
                 'myShare': {'card': sender.card_share, 'color': sender.color_share},
                 'myShareCount': len(sender.card_shares),
                 'currentAction': current_action,
+                'power': sender.power_available,
+                'partner': partner,
             }, to=sender.sid)
     else:
         socketio.emit('game rejoin', {'fail': True}, to=request.sid)
@@ -407,40 +411,7 @@ def process_event(json, game_id, game_obj: Game, sender: Player):
     elif json['action'] == 'permanentpublicreveal':
         if 'shy' not in sender.conditions and 'coy' not in sender.conditions and \
                 'savvy' not in sender.conditions and 'paranoid' not in sender.conditions:
-
-            # Usurper permanent reveal action
-            if sender.role.id in ('blueusurper', 'redusurper') and \
-                    not sender.revealed and not game_obj.usurper_power[sender.room]:
-                game_obj.set_leader(sender.room, sender.num, True)
-                game_obj.usurper_power[sender.room] = True
-                sender.votes = 0
-                for player in game_obj.players:
-                    if sender.num == player.my_vote:
-                        player.my_vote = -1
-                        player.mayor_vote = False
-                votes = list()
-                my_votes = list()
-                for player in game_obj.players:
-                    if player.room == sender.room:
-                        votes.append(player.votes)
-                        my_votes.append(player.my_vote)
-                    else:
-                        votes.append(0)
-                        my_votes.append(-1)
-                game_obj.actions.append(Action('room', {
-                    'action': 'leaderupdate',
-                    'leader': game_obj.leaders[sender.room],
-                    'votes': votes,
-                    'myVotes': my_votes,
-                }))
-
-            # Permanently reveal player
-            game_obj.actions.extend(sender.mark_permanent_public_reveal())
-            game_obj.actions.append(Action('room', {
-                'action': 'permanentpublicreveal',
-                'target': sender.num,
-                'role': sender.role.source,
-            }))
+            game_obj.actions.extend(sender.mark_permanent_public_reveal(game_obj))\
 
     elif json['action'] == 'share':
         target: Player = game_obj.players[json['target']]
@@ -858,6 +829,7 @@ def process_event(json, game_id, game_obj: Game, sender: Player):
                 'role': sender.role.source,
                 'alert': 'Security Tackles {}'.format(chosen_player.name),
             }))
+            sender.revealed = True
             game_obj.actions.append(Action(sender.num, {
                 'action': 'updateplayer',
                 'role': {'id': sender.role.id, 'source': sender.role.source},
@@ -1036,20 +1008,6 @@ def process_event(json, game_id, game_obj: Game, sender: Player):
                 'leader': game_obj.leaders[sender.room],
                 'votes': votes,
                 'myVotes': my_votes,
-            }))
-
-        elif sender.role.id in ('bluesecurity', 'redsecurity'):
-            options = list()
-            for player in game_obj.players:
-                if player.room == sender.room and player.num != sender.num:
-                    options.append(player.name)
-            game_obj.actions.append(Action(sender.num, {
-                'action': 'power',
-                'name': 'Security',
-                'description': 'Tackle a player to keep them in this room',
-                'type': 'security',
-                'options': options,
-                'target': sender.num,
             }))
 
         elif sender.role.id in ('bluebouncer', 'redbouncer') and sender.power_available:

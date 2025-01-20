@@ -68,7 +68,7 @@ function createGame() {
     var numRoles = 2;
     var buryRoles = 0;
     var expand = false;
-    for(var card of allCards) {
+    for(let card of allCards) {
         var cardElement = document.createElement('SPAN');
         cardElement.className = card.class;
         var name1 = document.createElement('LABEL');
@@ -162,7 +162,7 @@ function createGame() {
         var selectedCards = [];
         var numPlayers = 2;
         var burying = false;
-        for(var element of document.getElementById('gamecards').children) {
+        for(let element of document.getElementById('gamecards').children) {
             if(element.card != undefined) {
                 selectedCards.push(element.card.id);
                 numPlayers += element.card.num;
@@ -235,8 +235,8 @@ function collectPlayers(code, roleIDs, playerTarget, expandable, hidePVal) {
 
     // Setup game roles view
     var allCardsBox = document.getElementById('rolesbox');
-    for(var roleNum of roleIDs) {
-        for(var card of allCards) {
+    for(let roleNum of roleIDs) {
+        for(let card of allCards) {
             if(card.id == roleNum) {
                 var cardElement = document.createElement('SPAN');
                 cardElement.className = card.class;
@@ -274,7 +274,7 @@ function collectPlayers(code, roleIDs, playerTarget, expandable, hidePVal) {
         else {
             readyTitle.innerHTML = "Players (" + players.length + " of " + playerTarget + ")";
         }
-        for(var player of players) {
+        for(let player of players) {
             var rdyLbl = document.createElement('LABEL');
             if(player.ready) {
                 rdyLbl.innerHTML = player.name + " (ready)";
@@ -304,7 +304,7 @@ function collectPlayers(code, roleIDs, playerTarget, expandable, hidePVal) {
         }
         else if(msg.action == 'updatelist') {
             updatePlayers(msg.players);
-            for(var i = 0; i < msg.players.length; i++) {
+            for(let i = 0; i < msg.players.length; i++) {
                 var player = msg.players[i];
                 if(player.id == playerId) {
                     playerNum = i;
@@ -515,30 +515,41 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
 
     // Setup other players
     var players = [];
-    for(var i = 0; i < game.numPlayers; i++) {
-        var player = makePlayer(i);
+    for(let i = 0; i < game.numPlayers; i++) {
+        let player = makePlayer(i);
         players.push(player);
         if(i == myPlayerNum) {
             myPlayer = player;
         }
     }
+
+    // Setup current game variables for player info update if rejoining
+    if(rejoin) {
+        powerAvailable = game.power;
+        partnerName = game.partner;
+        myPlayer.role = game.players[myPlayerNum].role;
+    }
+
     updatePlayerInfo();
     setupRound();
 
     // Setup current game state if rejoining
     if(rejoin) {
-        for(var i = 0; i < game.numPlayers; i++) {
-            var player = players[i];
+        for(let i = 0; i < game.numPlayers; i++) {
+            let player = players[i];
             player.role = game.players[i].role;
             player.votes = game.players[i].votes;
             player.myVote = game.players[myPlayerNum].myVote == i;
+            player.tackled = game.players[i].tackled;
             player.voters = [];
-            for(var j = 0; j < players.length; j++) {
+            for(let j = 0; j < game.players.length; j++) {
                 if(game.players[j].myVote == i) {
                     player.voters.push(j);
                 }
             }
-            player.tackled = game.players[i].tackled;
+            if(player.tackled) {
+                player.tackleMarker.style.display = "";
+            }
             if(game.players[i].share == 'card') {
                 player.cardShareBtn.style.backgroundColor = "lightgreen";
             }
@@ -578,9 +589,21 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
             player.name = player.name + " (me)";
         }
         player.element = document.createElement('DIV');
+
+        // Tackle marker for security
+        player.tackleMarker = document.createElement('I');
+        player.tackleMarker.classList.add("fa");
+        player.tackleMarker.classList.add("fa-lock");
+        player.tackleMarker.title = "Tackled";
+        player.tackleMarker.style.display = "none";
+        player.element.appendChild(player.tackleMarker);
+
+        // Player name
         var playerLabel = document.createElement('LABEL');
         playerLabel.innerHTML = player.name;
         player.element.appendChild(playerLabel);
+
+        // Player card icon
         player.permanentRole = document.createElement('IMG');
         player.permanentRole.src = "/static/Cards/Back.png";
         player.permanentRole.onmouseover = function(e) {
@@ -591,11 +614,6 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
         }
         player.element.appendChild(player.permanentRole)
 
-        // Tackle marker for security
-        player.tackleMarker = document.createElement('LABEL');
-        player.tackleMarker.innerHTML = 'Tackled';
-        player.tackleMarker.style.display = "none";
-        player.element.appendChild(player.tackleMarker);
 
         // Character-specific powers
         player.powerBtn = document.createElement('BUTTON');
@@ -660,7 +678,7 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
     }
 
     function updateRoles() {
-        for(var player of players) {
+        for(let player of players) {
             if(player.role != undefined && !conditions.includes('blind')) {
                 player.permanentRole.src = player.role;                
             }
@@ -669,13 +687,16 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
 
     function updatePlayerInfo() {
         // Update button accessibility
-        publicRevealBtn.disabled = false;
-        permanentPublicRevealBtn.disabled = false;
+        publicRevealBtn.disabled = myPlayer.role != undefined;
+        permanentPublicRevealBtn.disabled = myPlayer.role != undefined;
         usePowerBtn.disabled = !powerAvailable;
         permanentPublicRevealBtn.innerHTML = "Permanent Reveal";
         hasPower = false;
-        if(game.myRole.id == 'blueusurper' || game.myRole.id == 'redusurper') {
-            permanentPublicRevealBtn.innerHTML = "Reveal & Usurp"
+        if(round.num > 1 && (game.myRole.id == 'blueusurper' || game.myRole.id == 'redusurper')) {
+            permanentPublicRevealBtn.innerHTML = "Permanent Reveal & Usurp"
+        }
+        else if(game.myRole.id == 'bluesecurity' || game.myRole.id == 'redsecurity') {
+            permanentPublicRevealBtn.innerHTML = "Permanent Reveal & Tackle"
         }
         else if(game.myRole.id == 'blueenforcer' || game.myRole.id == 'redenforcer') {
             hasPower = true;
@@ -693,10 +714,6 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
             hasPower = true;
             usePowerBtn.innerHTML = "Reveal & Current Votes +1";
         }
-        else if(game.myRole.id == 'bluesecurity' || game.myRole.id == 'redsecurity') {
-            hasPower = true;
-            usePowerBtn.innerHTML = "Permanent Reveal & Tackle";
-        }
         if(conditions.includes("coy" || conditions.includes("shy") ||
                 conditions.includes("savvy") || conditions.includes("paranoid"))) {
             publicRevealBtn.disabled = true;
@@ -704,7 +721,7 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
             usePowerBtn.disabled = true;
         }
 
-        for(var player of players) {
+        for(let player of players) {
             player.powerBtn.style.display = "none";
             player.colorShareBtn.disabled = false;
             player.cardShareBtn.disabled = false;
@@ -757,7 +774,7 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
         else {
             condstr = "Conditions: ";
         }
-        for(var i = 0; i < conditions.length; i++) {
+        for(let i = 0; i < conditions.length; i++) {
             if(conditions[i] == 'coy') {
                 condstr = condstr + 'Coy';
             }
@@ -844,7 +861,7 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
         sentHostages = [];
 
         // Put players in the rooms
-        for(var player of players) {
+        for(let player of players) {
             var nameLbl = document.createElement('LABEL');
             nameLbl.innerHTML = player.name;
             if(player.room == 0) {
@@ -880,12 +897,6 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
     }
 
     function startRound(startTime) {
-
-        // Reset security tackling
-        for(var player of players) {
-            player.tackled = false;
-            player.tackleMarker.style.display = "none";
-        }
 
         // Hide the room listing overlay
         document.getElementById('bothrooms').style.display = "none";
@@ -923,7 +934,7 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
             gameUpdate({"action": "sendhostages", "hostages": hostages});
             document.getElementById('hostagesubtitle').innerHTML = "Wait for Other Room";
             sendHostageBtn.style.display = "none";
-            for(var player of players) {
+            for(let player of players) {
                 if(player.hostageBtn != undefined) {
                     player.hostageBtn.disabled = true;
                     player.hostageBtn.innerHTML = "X";
@@ -932,7 +943,7 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
 
         }
         if(leader == null) {
-            for(var player of players) {
+            for(let player of players) {
                 if(player.room == myPlayer.room) {
                     leader = player.num;
                     break;
@@ -956,7 +967,7 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
         }
 
         // Put players in the rooms
-        for(var player of players) {
+        for(let player of players) {
             hostages.push(false);
             if(player.room == myPlayer.room && player.num != leader) {
                 myHostages.append(makeHostage(player));
@@ -965,7 +976,7 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
         if(sentHostages.includes(myPlayer.room)) {
             document.getElementById('hostagesubtitle').innerHTML = "Wait for Other Room";
             sendHostageBtn.style.display = "none";
-            for(var player of players) {
+            for(let player of players) {
                 if(player.hostageBtn != undefined) {
                     player.hostageBtn.disabled = true;
                     player.hostageBtn.innerHTML = "X";
@@ -1132,9 +1143,9 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
 
     function updateVoting() {
         if(myPlayerNum == leader) {
-            for(var player of players) {
+            for(let player of players) {
                 var tooltip = "Voters:";
-                for(var i = 0; i < player.voters.length; i++) {
+                for(let i = 0; i < player.voters.length; i++) {
                     tooltip = tooltip + "\n" + players[i].name;
                 }
                 if(player.num == leader) {
@@ -1155,9 +1166,9 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
             }
         }
         else {
-            for(var player of players) {
+            for(let player of players) {
                 var tooltip = "Voters:";
-                for(var i = 0; i < player.voters.length; i++) {
+                for(let i = 0; i < player.voters.length; i++) {
                 tooltip = tooltip + "\n" + players[i].name;
                 }
                 if(player.num == leader) {
@@ -1192,14 +1203,14 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
         decisionPane.innerHTML = "";
         var choices = [];
         var choiceNum = 0;
-        for(var option of options) {
+        for(let option of options) {
             choices.push(false);
         }
         var doneBtn = document.createElement('BUTTON');
         if(chooser == myPlayerNum) {
             document.getElementById('decisiontitle').innerHTML = name;
             document.getElementById('decisionsubtitle').innerHTML = descrip;
-            for(var i = 0; i < options.length; i++) {
+            for(let i = 0; i < options.length; i++) {
                 decisionPane.appendChild(makeOption(options[i], i));
                 decisionPane.appendChild(document.createElement('BR'));
             }
@@ -1209,7 +1220,7 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
                 doneBtn.disabled = true;
                 doneBtn.onclick = function(e) {
                     var chosen = [];
-                    for(var i = 0; i < choices.length; i++) {
+                    for(let i = 0; i < choices.length; i++) {
                         if(choices[i]) {
                             chosen.push(i);
                         }
@@ -1275,7 +1286,7 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
         room2.innerHTML = '<h2>Room 2</h2>';
 
         // Show all players by room
-        for(var player of players) {
+        for(let player of players) {
             var playerBox = document.createElement('DIV');
             var playerName = document.createElement('LABEL');
             var playerCard = document.createElement('IMG');
@@ -1342,7 +1353,7 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
         }
     });
     socket.on('event list', function(msg) {
-        for(var event of msg) {
+        for(let event of msg) {
             updateFromEvent(event);
         }
     });
@@ -1355,7 +1366,7 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
             startRound(msg.startTime);
         }
         else if(msg.action == 'shareupdate') {
-            for(var player of players) {
+            for(let player of players) {
                 if(msg.colorout == player.num) {
                     player.colorShareBtn.style.backgroundColor = "skyblue";
                 }
@@ -1369,7 +1380,7 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
                     player.cardShareBtn.style.backgroundColor = null;                    
                 }
             }
-            for(var share of msg.incoming) {
+            for(let share of msg.incoming) {
                 if(share.type == 'color')
                     players[share.sender].colorShareBtn.style.backgroundColor = "lightgreen";
                 else {
@@ -1412,6 +1423,9 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
                 cardShow(players[msg.target], msg.role, 'Permanent Reveal', false);
             }
             updateRoles();
+            if(msg.target == myPlayerNum) {
+                updatePlayerInfo();
+            }
         }
         else if(msg.action == 'hiderole') {
             players[msg.target].role = "/static/Cards/Back.png";
@@ -1431,12 +1445,12 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
         }
         else if(msg.action == 'leaderupdate') {
             leader = msg.leader;
-            for(var i = 0; i < players.length; i++) {
+            for(let i = 0; i < players.length; i++) {
                 var player = players[i];
                 player.votes = msg.votes[i];
                 player.myVote = msg.myVotes[myPlayerNum] == i;
                 player.voters = [];
-                for(var j = 0; j < players.length; j++) {
+                for(let j = 0; j < players.length; j++) {
                     if(msg.myVotes[j] == i) {
                         player.voters.push(j);
                     }
@@ -1459,7 +1473,7 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
             players[msg.target].tackleMarker.style.display = "";
         }
         else if(msg.action == 'setupround') {
-            for(var i = 0; i < game.numPlayers; i++) {
+            for(let i = 0; i < game.numPlayers; i++) {
                 players[i].room = msg.rooms[i];
                 if(msg.roles[i] != null) {
                     players[i].role = msg.roles[i];
@@ -1467,6 +1481,8 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
                 players[i].votes = 0;
                 players[i].myVote = false;
                 players[i].voters = [];
+                players[i].tackled = false;
+                players[i].tackleMarker.style.display = "none";
             }
             round.num = msg.round;
             round.time = msg.time;
@@ -1499,7 +1515,7 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
             }
         }
         else if(msg.action == 'endgame') {
-            for(var i = 0; i < game.numPlayers; i++) {
+            for(let i = 0; i < game.numPlayers; i++) {
                 players[i].room = msg.info[i].room;
             }
             endGame(msg.info);
@@ -1520,7 +1536,7 @@ function getCookie(cname) {
     var name = cname + "=";
     var decodedCookie = decodeURIComponent(document.cookie);
     var ca = decodedCookie.split(';');
-    for(var i = 0; i <ca.length; i++) {
+    for(let i = 0; i <ca.length; i++) {
         var c = ca[i];
         while (c.charAt(0) == ' ') {
             c = c.substring(1);

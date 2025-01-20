@@ -776,13 +776,71 @@ class Player:
             }))
         return actions
 
-    def mark_permanent_public_reveal(self) -> List['Action']:
+    def mark_permanent_public_reveal(self, game: Game) -> List['Action']:
         """
         Records that this player public revealed permanently
+        :param game: The game this player is in
         :return: List of Actions to be sent to clients based on public reveal (currently none)
         """
-        self.revealed = True
-        return []
+        # Usurper permanent reveal action
+        actions = list()
+        if self.role.id in ('blueusurper', 'redusurper') and len(game.rounds) - game.round > 1 and \
+                not self.revealed and not game.usurper_power[self.room]:
+            game.set_leader(self.room, self.num, True)
+            game.usurper_power[self.room] = True
+            self.votes = 0
+            for player in game.players:
+                if self.num == player.my_vote:
+                    player.my_vote = -1
+                    player.mayor_vote = False
+            votes = list()
+            my_votes = list()
+            for player in game.players:
+                if player.room == self.room:
+                    votes.append(player.votes)
+                    my_votes.append(player.my_vote)
+                else:
+                    votes.append(0)
+                    my_votes.append(-1)
+            actions.append(Action('room', {
+                'action': 'leaderupdate',
+                'leader': self.num,
+                'votes': votes,
+                'myVotes': my_votes,
+            }))
+            actions.append(Action('room', {
+                'action': 'permanentpublicreveal',
+                'target': self.num,
+                'role': self.role.source,
+                'alert': 'Usurper Takes Leader',
+            }))
+            self.revealed = True
+
+        # Security permanent reveal selection prompt
+        elif self.role.id in ('bluesecurity', 'redsecurity') and not self.revealed:
+            options = list()
+            for player in game.players:
+                if player.room == self.room and player.num != self.num:
+                    options.append(player.name)
+            actions.append(Action(self.num, {
+                'action': 'power',
+                'name': 'Security',
+                'description': 'Tackle a player to keep them in this room',
+                'type': 'security',
+                'options': options,
+                'target': self.num,
+            }))
+
+        # Generic permanent public reveal announcement
+        else:
+            actions.append(Action('room', {
+                'action': 'permanentpublicreveal',
+                'target': self.num,
+                'role': self.role.source,
+            }))
+            self.revealed = True
+
+        return actions
 
 
 def deal_roles(num_players: int, choices: List[int], shuffle: bool) -> Tuple[List['Role'], List[int], dict]:
