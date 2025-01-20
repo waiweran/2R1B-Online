@@ -817,7 +817,7 @@ def process_event(json, game_id, game_obj: Game, sender: Player):
                 'target': sender.num,
                 'type': 'card',
                 'role': sender.role.source,
-                'alert': 'You are in hae with {}'.format(player1.name),
+                'alert': 'You are in hate with {}'.format(player1.name),
             }))
 
         elif json['type'] == 'private eye' and sender.role.id == 'privateeye':
@@ -856,6 +856,7 @@ def process_event(json, game_id, game_obj: Game, sender: Player):
                 'action': 'permanentpublicreveal',
                 'target': sender.num,
                 'role': sender.role.source,
+                'alert': 'Security Tackles {}'.format(chosen_player.name),
             }))
             game_obj.actions.append(Action(sender.num, {
                 'action': 'updateplayer',
@@ -997,13 +998,14 @@ def process_event(json, game_id, game_obj: Game, sender: Player):
                 'target': sender.num,
             }))
 
-        elif sender.role.id in ('bluemayor', 'redmayor'):
+        elif sender.role.id in ('bluemayor', 'redmayor') and sender.my_vote >= 0:
             # Public reveal card
             game_obj.actions.append(Action('room', {
                 'action': 'publicreveal',
                 'target': sender.num,
                 'type': 'card',
                 'role': sender.role.source,
+                'alert': 'Mayor Gets an Extra Vote',
             }))
             # Boost votes by 1
             if sender.my_vote >= 0:
@@ -1050,6 +1052,35 @@ def process_event(json, game_id, game_obj: Game, sender: Player):
                 'target': sender.num,
             }))
 
-        elif sender.role.id in ('bluebouncer', 'redbouncer'):
-            # target: Player = game_obj.players[json['target']]
-            pass  # TODO: implement bouncer
+        elif sender.role.id in ('bluebouncer', 'redbouncer') and sender.power_available:
+            target: Player = game_obj.players[json['target']]
+
+            # TODO implement room switching from bouncer
+
+            # Private Reveal to target
+            game_obj.actions.append(Action(target.num, {
+                'action': 'privatereveal',
+                'target': sender.num,
+                'type': 'card',
+                'role': sender.role.source,
+                'alert': 'Bouncer Forced You to the Other Room',
+            }))
+
+            # Update Power for Bouncers
+            for player in game_obj.players:
+                if player.role.id in ('bluebouncer', 'redbouncer'):
+                    room_diff = 0
+                    for p_count in game_obj.players:
+                        if p_count.room == player.room:
+                            room_diff += 1
+                        else:
+                            room_diff -= 1
+                    player.power_available = room_diff > 0
+                    game_obj.actions.append(Action(player.num, {
+                        'action': 'updateplayer',
+                        'role': {'id': player.role.id, 'source': player.role.source},
+                        'conditions': list(player.conditions),
+                        'partner': player.partner,
+                        'power': player.power_available,
+                        'shares': len(player.card_shares),
+                    }))

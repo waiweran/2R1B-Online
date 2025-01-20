@@ -99,6 +99,17 @@ class Game:
                             'target': player.num,
                         }))
 
+        # Update Bouncer power availability
+        for player in self.players:
+            if player.role.id in ('bluebouncer', 'redbouncer'):
+                room_diff = 0
+                for p_count in self.players:
+                    if p_count.room == player.room:
+                        room_diff += 1
+                    else:
+                        room_diff -= 1
+                player.power_available = room_diff > 0 and len(self.rounds) - self.round <= 1
+
         # End game questions
         if self.round >= len(self.rounds):
             for player in self.players:

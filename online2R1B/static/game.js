@@ -668,18 +668,6 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
     }
 
     function updatePlayerInfo() {
-
-        // Room size differential for Bouncer
-        var roomSize = 0;
-        for(var player of players) {
-            if(player.room == myPlayer.room) {
-                roomSize += 1;
-            }
-            else {
-                roomSize -= 1;
-            }
-        }
-
         // Update button accessibility
         publicRevealBtn.disabled = false;
         permanentPublicRevealBtn.disabled = false;
@@ -745,12 +733,7 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
             else if(game.myRole.id == 'bluebouncer' || game.myRole.id == 'redbouncer') {
                 player.powerBtn.innerHTML = "Bouncer Power";
                 player.powerBtn.style.display = "";
-                if(roomSize > 0) {
-                    player.powerBtn.disabled = !powerAvailable;
-                }
-                else {
-                    player.powerBtn.disabled = true;
-                }
+                player.powerBtn.disabled = !powerAvailable;
             }
             if(myPlayerNum == player.num) {
                 player.powerBtn.disabled = true;
@@ -1409,7 +1392,12 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
         }
         else if(msg.action == 'publicreveal') {
             if(msg.type == 'card') {
-                cardShow(players[msg.target], msg.role, 'Public Reveal', false);
+                if(msg.alert != null) {
+                    cardShow(players[msg.target], msg.role, msg.alert, false);
+                }
+                else {
+                    cardShow(players[msg.target], msg.role, 'Public Reveal', false);
+                }
             }
             else {
                 teamShow(players[msg.target], msg.team, 'Public Reveal', false);
@@ -1417,7 +1405,12 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
         }
         else if(msg.action == 'permanentpublicreveal') {
             players[msg.target].role = msg.role;
-            cardShow(players[msg.target], msg.role, 'Permanent Reveal', false);
+            if(msg.alert != null) {
+                cardShow(players[msg.target], msg.role, msg.alert, false);
+            }
+            else {
+                cardShow(players[msg.target], msg.role, 'Permanent Reveal', false);
+            }
             updateRoles();
         }
         else if(msg.action == 'hiderole') {
