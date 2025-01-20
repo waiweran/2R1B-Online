@@ -71,8 +71,10 @@ class Game:
         self.round += 1
         self.start_time = None
         for player in self.players:
-            player.my_votes.clear()
+            player.my_vote = -1
             player.votes = 0
+            player.mayor_vote = False
+            player.tackled = False
         self.usurper_power = [False, False]
 
         # Update Drunk
@@ -550,8 +552,6 @@ class Game:
             elif player.role.id == 'robot':
                 winners.append(None)
 
-            # Add gray card win conditions here
-
             # Unknown cards (auto-lose)
             else:
                 winners.append(False)
@@ -584,11 +584,13 @@ class Player:
     color_share: Optional[int]
     card_share: Optional[int]
     votes: int
-    my_votes: Set[int]
+    my_vote: int
+    mayor_vote: bool
     prediction: Optional[int]
     partner: Optional[int]
     leprechaun: bool
     power_available: bool
+    tackled: bool
     revealed: bool
     room_log: List[int]
 
@@ -611,11 +613,13 @@ class Player:
         self.color_share = None
         self.card_share = None
         self.votes = 0
-        self.my_votes = set()
+        self.my_vote = -1
+        self.mayor_vote = False
         self.prediction = None
         self.partner = None
         self.leprechaun = (role.id == 'leprechaun')
         self.power_available = True
+        self.tackled = False
         self.revealed = False
         self.room_log = [room]
 

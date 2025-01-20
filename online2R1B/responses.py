@@ -195,6 +195,8 @@ def handle_game_reenter(json):
                     'role': role,
                     'share': share_status,
                     'votes': player.votes,
+                    'myVote': player.my_vote,
+                    'tackled': player.tackled,
                 })
             if game_obj.round >= len(game_obj.rounds):
                 round_time = game_obj.rounds[-1]['time']
@@ -222,12 +224,12 @@ def handle_game_reenter(json):
                 'sentHostages': rooms_sending_hostages,
                 'leader': game_obj.leaders[sender.room],
                 'myShare': {'card': sender.card_share, 'color': sender.color_share},
-                'myVotes': list(sender.my_votes),
                 'myShareCount': len(sender.card_shares),
                 'currentAction': current_action,
             }, to=sender.sid)
     else:
         socketio.emit('game rejoin', {'fail': True}, to=request.sid)
+
 
 @socketio.on('time check')
 def handle_time_check(json):
@@ -413,17 +415,18 @@ def process_event(json, game_id, game_obj: Game, sender: Player):
                 game_obj.usurper_power[sender.room] = True
                 sender.votes = 0
                 for player in game_obj.players:
-                    if sender.num in player.my_votes:
-                        player.my_votes.remove(sender.num)
+                    if sender.num == player.my_vote:
+                        player.my_vote = -1
+                        player.mayor_vote = False
                 votes = list()
                 my_votes = list()
                 for player in game_obj.players:
                     if player.room == sender.room:
                         votes.append(player.votes)
-                        my_votes.append(list(player.my_votes))
+                        my_votes.append(player.my_vote)
                     else:
                         votes.append(0)
-                        my_votes.append([])
+                        my_votes.append(-1)
                 game_obj.actions.append(Action('room', {
                     'action': 'leaderupdate',
                     'leader': game_obj.leaders[sender.room],
@@ -545,31 +548,40 @@ def process_event(json, game_id, game_obj: Game, sender: Player):
                 game_obj.usurper_power[target.room] = False
                 target.votes = 0
                 for player in game_obj.players:
-                    if target.num in player.my_votes:
-                        player.my_votes.remove(target.num)
+                    if target.num == player.my_vote:
+                        player.my_vote = -1
+                        player.mayor_vote = False
             # Election
             else:
-                if target.num in sender.my_votes:
-                    sender.my_votes.remove(target.num)
-                    target.votes -= 1
-                else:
-                    sender.my_votes.add(target.num)
+                old_vote = sender.my_vote
+                sender.my_vote = -1
+                # Remove old vote
+                if old_vote >= 0:
+                    game_obj.players[old_vote].votes -= 1
+                    if sender.mayor_vote:
+                        # Handle Mayor un-voting for someone after using their power
+                        sender.mayor_vote = False
+                        game_obj.players[old_vote].votes -= 1
+                # Add new vote if not just un-voting
+                if old_vote != target.num:
+                    sender.my_vote = target.num
                     target.votes += 1
                     if target.votes > game_obj.num_players/4 and not game_obj.usurper_power[target.room]:
                         game_obj.set_leader(target.room, target.num, True)
                         target.votes = 0
                         for player in game_obj.players:
-                            if target.num in player.my_votes:
-                                player.my_votes.remove(target.num)
+                            if target.num == player.my_vote:
+                                player.my_vote = -1
+                                player.mayor_vote = False
             votes = list()
             my_votes = list()
             for player in game_obj.players:
                 if player.room == sender.room:
                     votes.append(player.votes)
-                    my_votes.append(list(player.my_votes))
+                    my_votes.append(player.my_vote)
                 else:
                     votes.append(0)
-                    my_votes.append([])
+                    my_votes.append(-1)
             game_obj.actions.append(Action('room', {
                 'action': 'leaderupdate',
                 'leader': game_obj.leaders[sender.room],
@@ -820,6 +832,45 @@ def process_event(json, game_id, game_obj: Game, sender: Player):
             sender.prediction = json['choice']
             socketio.emit('quick event', {'action': 'decision'}, to='room_{}'.format(json['id']))
 
+        elif json['type'] == 'security' and sender.role.id in ('bluesecurity', 'redsecurity') and \
+                sender.power_available:
+            room = list()
+            for player in game_obj.players:
+                if player.room == sender.room and player.num != sender.num:
+                    room.append(player)
+            chosen_player = room[json['choice']]
+            chosen_player.tackled = True
+            socketio.emit('quick event', {'action': 'decision'}, to=sender.sid)
+            sender.power_available = False
+            # Update Power Used
+            game_obj.actions.append(Action(sender.num, {
+                'action': 'updateplayer',
+                'role': {'id': sender.role.id, 'source': sender.role.source},
+                'conditions': list(sender.conditions),
+                'partner': sender.partner,
+                'power': sender.power_available,
+                'shares': len(sender.card_shares),
+            }))
+            # Permanent Public Reveal
+            game_obj.actions.append(Action('room', {
+                'action': 'permanentpublicreveal',
+                'target': sender.num,
+                'role': sender.role.source,
+            }))
+            game_obj.actions.append(Action(sender.num, {
+                'action': 'updateplayer',
+                'role': {'id': sender.role.id, 'source': sender.role.source},
+                'conditions': list(sender.conditions),
+                'partner': sender.partner,
+                'power': sender.power_available,
+                'shares': len(sender.card_shares),
+            }))
+            game_obj.actions.append(Action('room', {
+                'action': 'updateotherplayer',
+                'target': chosen_player.num,
+                'tackled': chosen_player.tackled,
+            }))
+
     elif json['action'] == 'power':
         if sender.role.id in ('blueagent', 'redagent') and sender.power_available:
             target: Player = game_obj.players[json['target']]
@@ -942,6 +993,59 @@ def process_event(json, game_id, game_obj: Game, sender: Player):
                 'name': 'Eris',
                 'description': 'Make 2 players in hate',
                 'type': 'eris',
+                'options': options,
+                'target': sender.num,
+            }))
+
+        elif sender.role.id in ('bluemayor', 'redmayor'):
+            # Public reveal card
+            game_obj.actions.append(Action('room', {
+                'action': 'publicreveal',
+                'target': sender.num,
+                'type': 'card',
+                'role': sender.role.source,
+            }))
+            # Boost votes by 1
+            if sender.my_vote >= 0:
+                target = game_obj.players[sender.my_vote]
+                if sender.room == target.room:
+                    sender.mayor_vote = True
+                    target.votes += 1
+                    # Handle leadership change based on vote boost
+                    if target.votes > game_obj.num_players / 4 and not game_obj.usurper_power[target.room]:
+                        game_obj.set_leader(target.room, target.num, True)
+                        target.votes = 0
+                        for player in game_obj.players:
+                            if target.num == player.my_vote:
+                                player.my_vote = -1
+                                player.mayor_vote = False
+            # Display update
+            votes = list()
+            my_votes = list()
+            for player in game_obj.players:
+                if player.room == sender.room:
+                    votes.append(player.votes)
+                    my_votes.append(player.my_vote)
+                else:
+                    votes.append(0)
+                    my_votes.append(-1)
+            game_obj.actions.append(Action('room', {
+                'action': 'leaderupdate',
+                'leader': game_obj.leaders[sender.room],
+                'votes': votes,
+                'myVotes': my_votes,
+            }))
+
+        elif sender.role.id in ('bluesecurity', 'redsecurity'):
+            options = list()
+            for player in game_obj.players:
+                if player.room == sender.room and player.num != sender.num:
+                    options.append(player.name)
+            game_obj.actions.append(Action(sender.num, {
+                'action': 'power',
+                'name': 'Security',
+                'description': 'Tackle a player to keep them in this room',
+                'type': 'security',
                 'options': options,
                 'target': sender.num,
             }))

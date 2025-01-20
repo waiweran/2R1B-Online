@@ -23,6 +23,8 @@ const allCards = [
     {"name1": "Conman", "name3": "Conman", "class": "blueredteam", "num": 2, "id": 45},
     {"name1": "Eris", "name3": "Cupid", "class": "blueredteam", "num": 2, "id": 51},
     {"name1": "Enforcer", "name3": "Enforcer", "class": "blueredteam", "num": 2, "id": 52},
+    {"name1": "Mayor", "name3": "Mayor", "class": "blueredteam", "num": 2, "id": 53},
+    {"name1": "Security", "name3": "Security", "class": "blueredteam", "num": 2, "id": 54},
     {"name2": 'Gambler', "class": "grayteam", "num": 1, "id": 13},
     {"name2": 'MI6', "class": "grayteam", "num": 1, "id": 4},
     {"name2": 'Nuclear Tyrant', "class": "grayteam", "num": 1, "id": 31},
@@ -383,9 +385,6 @@ function rejoinGame(gameId) {
                 var rejoinBtn = document.createElement('BUTTON');
                 rejoinBtn.innerHTML = key;
                 rejoinBtn.onclick = function(e) {
-                    console.log('FUCKIN SHIT');
-                    console.log(key);
-                    console.log(value);
                     socket.on('game rejoin', function(gameMsg) {
                         if(gameMsg.fail) {
                             window.location.replace("/");
@@ -532,7 +531,14 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
             var player = players[i];
             player.role = game.players[i].role;
             player.votes = game.players[i].votes;
-            player.myVote = game.myVotes.includes(i);
+            player.myVote = game.players[myPlayerNum].myVote == i;
+            player.voters = [];
+            for(var j = 0; j < players.length; j++) {
+                if(game.players[j].myVote == i) {
+                    player.voters.push(j);
+                }
+            }
+            player.tackled = game.players[i].tackled;
             if(game.players[i].share == 'card') {
                 player.cardShareBtn.style.backgroundColor = "lightgreen";
             }
@@ -566,6 +572,7 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
             "name": game.players[i].name, 
             "num": i, 
             "room": game.players[i].room, 
+            "tackled": false,
         };
         if(myPlayerNum == i) {
             player.name = player.name + " (me)";
@@ -583,6 +590,12 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
             expandTarget = null;
         }
         player.element.appendChild(player.permanentRole)
+
+        // Tackle marker for security
+        player.tackleMarker = document.createElement('LABEL');
+        player.tackleMarker.innerHTML = 'Tackled';
+        player.tackleMarker.style.display = "none";
+        player.element.appendChild(player.tackleMarker);
 
         // Character-specific powers
         player.powerBtn = document.createElement('BUTTON');
@@ -687,6 +700,14 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
         else if(game.myRole.id == 'eris') {
             hasPower = true;
             usePowerBtn.innerHTML = "Use Eris Power";
+        }
+        else if(game.myRole.id == 'bluemayor' || game.myRole.id == 'redmayor') {
+            hasPower = true;
+            usePowerBtn.innerHTML = "Reveal & Current Votes +1";
+        }
+        else if(game.myRole.id == 'bluesecurity' || game.myRole.id == 'redsecurity') {
+            hasPower = true;
+            usePowerBtn.innerHTML = "Permanent Reveal & Tackle";
         }
         if(conditions.includes("coy" || conditions.includes("shy") ||
                 conditions.includes("savvy") || conditions.includes("paranoid"))) {
@@ -877,6 +898,12 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
 
     function startRound(startTime) {
 
+        // Reset security tackling
+        for(var player of players) {
+            player.tackled = false;
+            player.tackleMarker.style.display = "none";
+        }
+
         // Hide the room listing overlay
         document.getElementById('bothrooms').style.display = "none";
         document.getElementById('fade').style.display = "none";
@@ -966,7 +993,11 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
         function makeHostage(player) {
             var hostageItem = document.createElement('DIV');
             player.hostageBtn = document.createElement('BUTTON');
-            if(leader == myPlayerNum) {
+            if(player.tackled) {
+                player.hostageBtn.disabled = true;
+                player.hostageBtn.innerHTML = "Tackled";
+            }
+            else if(leader == myPlayerNum) {
                 player.hostageBtn.innerHTML = "Select";
                 player.hostageBtn.onclick = function(e) {
                     hostages[player.num] = !hostages[player.num];
@@ -1119,24 +1150,36 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
     function updateVoting() {
         if(myPlayerNum == leader) {
             for(var player of players) {
+                var tooltip = "Voters:";
+                for(var i = 0; i < player.voters.length; i++) {
+                    tooltip = tooltip + "\n" + players[i].name;
+                }
                 if(player.num == leader) {
                     player.nominateBtn.innerHTML = "Current Leader";
+                    player.nominateBtn.title = "";
                     player.nominateBtn.disabled = true;
                 }
                 else if(player.votes > 0) {
                     player.nominateBtn.innerHTML = "Pass Leader (" + player.votes + ")";
+                    player.nominateBtn.title = tooltip;
                     player.nominateBtn.disabled = false;
                 }
                 else {
                     player.nominateBtn.innerHTML = "Pass Leadership";
+                    player.nominateBtn.title = "";
                     player.nominateBtn.disabled = false;                    
                 }
             }
         }
         else {
             for(var player of players) {
+                var tooltip = "Voters:";
+                for(var i = 0; i < player.voters.length; i++) {
+                tooltip = tooltip + "\n" + players[i].name;
+                }
                 if(player.num == leader) {
                     player.nominateBtn.innerHTML = "Current Leader";
+                    player.nominateBtn.title = "";
                     player.nominateBtn.disabled = true;
                 }
                 else if(player.votes > 0) {
@@ -1146,17 +1189,19 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
                     else {
                         player.nominateBtn.innerHTML = "Vote for (" + player.votes + ")";                            
                     }
+                    player.nominateBtn.title = tooltip;
                     player.nominateBtn.disabled = false;
                 }
                 else {
                     player.nominateBtn.innerHTML = "Nominate Leader";
+                    player.nominateBtn.title = "";
                     player.nominateBtn.disabled = false;
                 }
             }
         }
     }
 
-    function displayDecision(name, descrip, tag, options, chooser, multiple) {
+    function displayDecision(name, descrip, tag, options, chooser, multiple, optional) {
         document.getElementById('decision').style.display = "";
         document.getElementById('hostages').style.display = "none";
         document.getElementById('bothrooms').style.display = "none";
@@ -1188,14 +1233,16 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
                     }
                     gameUpdate({'action': 'decision', 'type': tag, 'choice': chosen}, true);
                 };
+                decisionPane.appendChild(doneBtn);
+            }
+            if(optional) {
                 var cancelBtn = document.createElement('BUTTON');
                 cancelBtn.innerHTML = "Cancel";
                 cancelBtn.onclick = function(e) {
                     document.getElementById('decision').style.display = "none";
                 };
-                decisionPane.appendChild(doneBtn);
+                decisionPane.appendChild(document.createElement('BR'));
                 decisionPane.appendChild(cancelBtn);
-
             }
         }
         else {
@@ -1394,7 +1441,13 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
             for(var i = 0; i < players.length; i++) {
                 var player = players[i];
                 player.votes = msg.votes[i];
-                player.myVote = msg.myVotes[myPlayerNum].includes(i);
+                player.myVote = msg.myVotes[myPlayerNum] == i;
+                player.voters = [];
+                for(var j = 0; j < players.length; j++) {
+                    if(msg.myVotes[j] == i) {
+                        player.voters.push(j);
+                    }
+                }
             }
             updateVoting();
         }
@@ -1408,7 +1461,10 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
                 partnerName = players[msg.partner].name;
             updatePlayerInfo();
         }
-
+        else if(msg.action == 'updateotherplayer') {
+            players[msg.target].tackled = msg.tackled;
+            players[msg.target].tackleMarker.style.display = "";
+        }
         else if(msg.action == 'setupround') {
             for(var i = 0; i < game.numPlayers; i++) {
                 players[i].room = msg.rooms[i];
@@ -1417,6 +1473,7 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
                 }
                 players[i].votes = 0;
                 players[i].myVote = false;
+                players[i].voters = [];
             }
             round.num = msg.round;
             round.time = msg.time;
@@ -1427,17 +1484,22 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
             setupRound();
         }
         else if(msg.action == 'power') {
-            displayDecision(msg.name, msg.description, msg.type, msg.options, msg.target, true)
+            if(msg.type == 'security') {
+                displayDecision(msg.name, msg.description, msg.type, msg.options, msg.target, false, true);
+            }
+            else {
+                displayDecision(msg.name, msg.description, msg.type, msg.options, msg.target, true, true);
+            }
         }
         else if(msg.action == 'pause') {
             if(msg.type == 'private eye') {
-                displayDecision('Private Eye', 'Choose the buried card', msg.type, msg.options, msg.target, false);
+                displayDecision('Private Eye', 'Choose the buried card', msg.type, msg.options, msg.target, false, false);
             }
             else if(msg.type == 'gambler') {
-                displayDecision('Gambler', 'Choose the winning team', msg.type, msg.options, msg.target, false);
+                displayDecision('Gambler', 'Choose the winning team', msg.type, msg.options, msg.target, false, false);
             }
             else if(msg.type == 'sniper') {
-                displayDecision('Sniper', 'Choose the Target', msg.type, msg.options, msg.target, false);
+                displayDecision('Sniper', 'Choose the Target', msg.type, msg.options, msg.target, false, false);
             }
             else {
                 gameUpdate({'action': 'continue'});
