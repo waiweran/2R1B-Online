@@ -68,6 +68,35 @@ function createGame() {
     var numRoles = 2;
     var buryRoles = 0;
     var expand = false;
+
+    // Pop-up descriptions on space
+    var expandCharacter = null;
+    var expandDescription = document.getElementById('expanddescription');
+    expandDescription.style.display = "none";
+    document.body.onkeydown = function(e) {
+        if(e.charCode == " ") {
+            e.preventDefault();
+            if(expandCharacter != null) {
+                expandDescription.src = expandCharacter
+                expandDescription.style.display = "";
+            }
+        }
+    }
+    document.body.onkeyup = function(e) {
+        if(e.charCode == " ") {
+            e.preventDefault()
+            expandDescription.style.display = "none";            
+        }
+    }
+    var presidentBomberElement = document.getElementById('presidentbomber')
+    presidentBomberElement.onmouseover = function(e) {
+        expandCharacter = "/static/Characters/PresidentBomber.png";
+    }
+    presidentBomberElement.onmouseout = function(e) {
+        expandCharacter = null;
+    }
+
+    // Role selector bars
     for(let card of allCards) {
         var cardElement = document.createElement('SPAN');
         cardElement.className = card.class;
@@ -90,6 +119,12 @@ function createGame() {
         cardElement.appendChild(name3);
         allCardsBox.appendChild(cardElement);
         cardElement.card = card;
+        cardElement.onmouseover = function(e) {
+            expandCharacter = "/static/Characters/" + card.id + ".png";
+        }
+        cardElement.onmouseout = function(e) {
+            expandCharacter = null;
+        }    
     }
 
     var dragger = dragula([gameCardsBox, allCardsBox], {
@@ -138,6 +173,12 @@ function createGame() {
                 cardElement.appendChild(name3);
                 allCardsBox.appendChild(cardElement);
                 cardElement.card = el.card;
+                cardElement.onmouseover = function(e) {
+                expandCharacter = "/static/Characters/0.png";
+        }
+        cardElement.onmouseout = function(e) {
+            expandCharacter = null;
+        }   
             }
             else if(source.id == 'gamecards' && target.id == 'allcards') {
                 el.remove();
@@ -496,7 +537,7 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
     var showQueue = [];
     var expandTarget = null;
     var expandElement = document.getElementById('expandelement');
-    expandelement.style.display = "none";
+    expandElement.style.display = "none";
     document.body.onkeydown = function(e) {
         if(e.charCode == " ") {
             e.preventDefault();

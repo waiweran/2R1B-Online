@@ -1,17 +1,20 @@
 High Priority
 
-Add links to rules, character guide
-
+Add customization options to game setup
+ - Adjust round start lockout timer
+ - Option for 3-minute rounds
+ - Option to disable color sharing in games with 10 or fewer players
+ - Option for viewable log of game events
 
 Medium Priority
 
-Disable color sharing in games with 10 or fewer players (maybe)
 Add tutorial
-
+Fix usurping election vote thresholds
 
 Low Priority
 
 Add play again button to ending screen
 Add leave button to join page
-Add messaging feature
 Make selected hostage info persist across reloads
+Add Ambassador
+Add Bouncer

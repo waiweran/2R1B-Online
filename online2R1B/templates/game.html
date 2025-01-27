@@ -24,6 +24,11 @@
 			<br>
 			<button id="ready">Ready</button>
 		</div>
+		<div id="rules">
+			<a href="/static/RuleBook.pdf" target="_blank">Rule Book</a>
+			<br><br>
+			<a href="/static/CharacterGuide.pdf" target="_blank">Character Guide</a>
+		</div>
 		<div id="readybox">
 			<h2 id="players">Players (0 of {{ num_players }}{% if expand %}+{% endif %})</h2>
 		</div>
@@ -98,7 +103,13 @@
 			<div id="victoryroom2"></div>
 		</div>
 	</div>
-	<p id="code">Game Code: {{ game_info.code }}</p>
+	<div id="code">
+		<a href="/static/RuleBook.pdf" target="_blank">Rule Book</a>
+		&nbsp | &nbsp
+		<a href="/static/CharacterGuide.pdf" target="_blank">Character Guide</a>
+		&nbsp | &nbsp
+		Game Code: {{ game_info.code }}
+	</div>
 </body>
 <style>
 	body {
@@ -188,6 +199,23 @@
 		box-shadow: 0 0 5px 5px #d0d0d0;
 		border-radius: 10px;
 		background-color: #d0d0d0;
+	}
+	#rules {
+		position: fixed;
+  		top: 80%;
+  		left: 15%;
+  		transform: translate(-50%, -50%);
+
+		color: #989898;
+		font-size: 18px;
+		text-transform: uppercase;
+	}
+	#rules a {
+		color: #989898;
+		font-size: 18px;
+		text-transform: uppercase;
+		background: none;
+		text-decoration: underline;
 	}
 	#readybox {
 		position: fixed;
@@ -429,13 +457,21 @@
 
 	#code {
 		position: fixed;
-		width: 100px;
+		width: 268px;
   		top: 100%;
   		left: 100%;
-  		transform: translate(-100%, -140%);
+  		transform: translate(-100%, -100%);
 		color: #333333;
 		font-size: 12px;
 		padding: 5px;
+	}
+	#code a {
+		color: #333333;
+		font-size: 12px;
+		background: none;
+		text-transform: none;
+		padding: 0 0 0 0;
+		text-decoration: underline;
 	}
 
 </style>

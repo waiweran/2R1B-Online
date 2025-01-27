@@ -24,6 +24,7 @@
 		<button id="expandbtn">Auto-Expand with Blue/Red Team, Gambler</button>
 		<button id="createbtn" disabled="disabled">Create Game</button>
 	</div>
+	<img id="expanddescription">
 	<form id="gameform" method="post">
 		<input type="hidden" name="roles" id="rolesinput">
 		<input type="hidden" name="numplayers" id="numplayersinput">
@@ -136,6 +137,16 @@
 		left: 50%;
 		transform: translate(-50%, 0%);
 		width: 90%;
+	}
+	#expanddescription {
+		position: fixed;
+		width: 60%;
+  		left: 50%;
+  		top: 50%;
+  		transform: translate(-50%, -50%);
+  		border-radius: 15px;
+  		box-shadow: 0 0 5px 5px #d0d0d0;
+  		z-index: 1;
 	}
 </style>
 </html>
