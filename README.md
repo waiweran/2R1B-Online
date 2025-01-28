@@ -3,7 +3,7 @@ Online implementation of 2 Rooms and a Boom by Tuesday Knight Games
 Free print and play version
 
 # Website
-[http:](http://tworooms.net)
+[tworooms.net](http://tworooms.net)
 
 ## Server Notes
 To update, copy files then restart
