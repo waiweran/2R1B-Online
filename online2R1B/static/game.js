@@ -235,6 +235,18 @@ function createGame() {
             document.getElementById('createbtn').disabled = true;
         }
     }
+
+    // Form for advanced game options
+    var createForm = document.getElementById('gameform');
+    createForm.style.display = "none";
+    var optionsBtn = document.getElementById('optionsbtn');
+    optionsBtn.onclick = function(e) {
+        createForm.style.display = "";
+    }    
+    var closeOptionsBtn = document.getElementById('closeoptionsbtn');
+    closeOptionsBtn.onclick = function(e) {
+        createForm.style.display = "none";
+    }
 }
 
 

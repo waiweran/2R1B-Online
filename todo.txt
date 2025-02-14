@@ -9,7 +9,7 @@ Add customization options to game setup
 Medium Priority
 
 Add tutorial
-Fix usurping election vote thresholds
+Fix usurping & election vote thresholds
 
 Low Priority
 
