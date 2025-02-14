@@ -34,11 +34,11 @@
 			<label for="lockouttimeinput">Start Round Lockout Timer (sec):</label>&nbsp
 			<input type="number" name="lockouttime" id="lockouttimeinput" value="15" min="0" max="60"><br>
 			<label for="roundtimerstandard">Round Timer:</label><br>
-			<input type="radio" name="roundtimerstandard" id="roundtimerstandard" checked>
+			<input type="radio" name="roundtimer" id="roundtimerstandard" value="false" checked>
 			<label for="roundtimerstandard">Decreased time for each round (normal)</label><br>
-			<input type="radio" name="roundtimeruniform" id="roundtimeruniform">
+			<input type="radio" name="roundtimer" id="roundtimeruniform" value="true">
 			<label for="roundtimeruniform">All rounds 3 minutes</label><br><br>
-			<input type="checkbox" name="colorsharing" id="colorsharinginput" checked>
+			<input type="checkbox" name="colorsharing" id="colorsharinginput" value="true" checked>
 			<label for="colorsharinginput">Allow color sharing in games with 10 or fewer players</label>&nbsp
 		</div>
 		<input type="hidden" name="roles" id="rolesinput">

@@ -1,10 +1,6 @@
 High Priority
 
-Add customization options to game setup
- - Adjust round start lockout timer
- - Option for 3-minute rounds
- - Option to disable color sharing in games with 10 or fewer players
- - Option for viewable log of game events
+Add option for viewable log of game events
 
 Medium Priority
 

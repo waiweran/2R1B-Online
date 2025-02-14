@@ -19,19 +19,22 @@ class Game:
     actions: List['Action']
     current_action: Optional['Action']
 
-    def __init__(self, player_names, choices, shuffle=True):
+    def __init__(self, player_names, choices, uniform_timer=False, allow_color_share=True, shuffle=True):
         """
         Creates a game object when a new game is started, after players and roles chosen
         Sets up players and rounds for the game
         Starts the first round
         :param player_names: List of names of players in the game
         :param choices: List of chosen roles
+        :param uniform_timer: Optional argument to customize the round timers
+        :param allow_color_share: Optional argument used to block color sharing with 10 or fewer players
         :param shuffle: Optional argument to prevent shuffling for deterministic testing
         """
         self.players = []
         self.num_players = len(player_names)
         self.roles, rooms, self.settings = deal_roles(self.num_players, choices, shuffle)
         self.rounds = []
+        self.allow_color_share = allow_color_share or self.num_players > 10
         self.leaders = [None, None]
         self.leader_log = [(list(), list())]
         self.usurper_power = [False, False]
@@ -55,7 +58,10 @@ class Game:
         for roundOption in round_options:
             if roundOption['min'] <= self.num_players <= roundOption['max']:
                 for i in range(len(roundOption['rounds'])):
-                    self.rounds.append({"time": len(roundOption['rounds']) - i, "hostages": roundOption['rounds'][i]})
+                    round_time = len(roundOption['rounds']) - i
+                    if uniform_timer:
+                        round_time = 3
+                    self.rounds.append({"time": round_time, "hostages": roundOption['rounds'][i]})
                 break
 
     def setup_round(self):

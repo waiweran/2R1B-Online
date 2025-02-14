@@ -62,14 +62,12 @@ def create():
         setup = json.loads(request.form['roles'])
         num_players = request.form['numplayers']
         lockout_time = int(request.form['lockouttime'])
-        timer_type = request.form['roundtimer'] == 'on'
-        color_sharing = request.form['colorsharing'] == 'on'
+        uniform_timer = request.form['roundtimer'] == 'true'
+        color_share = request.form.get('colorsharing') == 'true'
         expandable = request.form['expand'] == 'true'
-        print(type(lockout_time))
-        print(timer_type)
-        print(color_sharing)
         db_game = models.Game(code=code, timestamp=datetime.datetime.now(), setup=pickle.dumps(setup),
-                              min_players=num_players, expandable=expandable)
+                              min_players=num_players, lockout_time=lockout_time, uniform_timer=uniform_timer,
+                              color_share=color_share, expandable=expandable)
         db.session.add(db_game)
         db.session.commit()
         return redirect(url_for('play', game_id=db_game.id))

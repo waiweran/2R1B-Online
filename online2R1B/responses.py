@@ -64,7 +64,8 @@ def handle_disconnect():
             }, to=game_entry.code)
             if all_ready:
                 role_choices = pickle.loads(game_entry.setup)
-                game_entry.object = pickle.dumps(Game(player_names, role_choices))
+                game_entry.object = pickle.dumps(Game(player_names, role_choices, game_entry.uniform_timer,
+                                                      game_entry.color_share))
                 game_entry.started = True
                 db.session.commit()
         elif not player_entry.game.ended:
@@ -109,7 +110,8 @@ def handle_player_update(json):
     }, to=json['code'])
     if all_ready:
         role_choices = pickle.loads(game_entry.setup)
-        game_entry.object = pickle.dumps(Game(player_names, role_choices))
+        game_entry.object = pickle.dumps(Game(player_names, role_choices, game_entry.uniform_timer,
+                                              game_entry.color_share))
         game_entry.started = True
         db.session.commit()
 
@@ -146,6 +148,8 @@ def handle_game_enter(json):
         'round': len(game_obj.rounds) - game_obj.round,
         'time': game_obj.rounds[game_obj.round]['time'],
         'numHostages': game_obj.rounds[game_obj.round]['hostages'],
+        'lockoutTime': game_entry.lockout_time,
+        'allowColorShare': game_obj.allow_color_share,
     }, to=request.sid)
 
 
@@ -230,6 +234,8 @@ def handle_game_reenter(json):
                 'currentAction': current_action,
                 'power': sender.power_available,
                 'partner': partner,
+                'lockoutTime': game_entry.lockout_time,
+                'allowColorShare': game_obj.allow_color_share,
             }, to=sender.sid)
     else:
         socketio.emit('game rejoin', {'fail': True}, to=request.sid)
@@ -420,7 +426,7 @@ def process_event(json, game_id, game_obj: Game, sender: Player):
             former_target = game_obj.players[sender.color_share]
         elif sender.card_share is not None:
             former_target = game_obj.players[sender.card_share]
-        if json['type'] == 'color':
+        if json['type'] == 'color' and game_obj.allow_color_share:
             sender.card_share = None
             if 'shy' in sender.conditions or 'savvy' in sender.conditions or \
                     'paranoid' in sender.conditions or sender.color_share == target.num:

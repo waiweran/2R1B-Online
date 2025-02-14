@@ -17,7 +17,7 @@ class Game(db.Model):
     min_players = db.Column(db.Integer)
     expandable = db.Column(db.Boolean)
     lockout_time = db.Column(db.Integer)
-    db.uniform_timer = db.Column(db.Boolean)
+    uniform_timer = db.Column(db.Boolean)
     color_share = db.Column(db.Boolean)
     started = db.Column(db.Boolean, default=False)
     ended = db.Column(db.Boolean, default=False)

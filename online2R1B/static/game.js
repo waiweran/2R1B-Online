@@ -543,6 +543,8 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
 
     // General Setup
     var round = {"num": game.round, "time": game.time, "hostages": game.numHostages}
+    var lockoutTime = game.lockoutTime;
+    var allowColorShare = game.allowColorShare;
     var leader = null;
     var sentHostages = [];
     var currentlyShowing = false;
@@ -716,7 +718,9 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
         player.colorShareBtn.onclick = function(e) {
             gameUpdate({"action": "share", "type": "color", "target": i});
         };
-        player.element.appendChild(player.colorShareBtn);
+        if(allowColorShare) {
+            player.element.appendChild(player.colorShareBtn);
+        }
         player.cardShareBtn = document.createElement('BUTTON');
         player.cardShareBtn.innerHTML = "Card Share";
         player.cardShareBtn.onclick = function(e) {
@@ -935,7 +939,7 @@ function initialize(game, myPlayerNum, rejoin, hidePVal) {
         startRoundBtn.disabled = true;
         setTimeout(function() {
             startRoundBtn.disabled = false;
-        }, 15000)
+        }, lockoutTime*1000)
         startRoundBtn.onclick = function() {
             gameUpdate({"action": "startround", "startTime": Date.now() + timeOffset});
         };
